@@ -523,3 +523,330 @@ export const useConsolidadoVideoData = () => {
 
   return { data, loading, error, refetch: loadData }
 }
+
+
+
+
+
+// NOVA FUNÇÃO para buscar dados off-line
+export const fetchOfflineData = async () => {
+  try {
+    const response = await api.get("/cartao/off-line")
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados off-line:", error)
+    throw error
+  }
+}
+
+
+
+// NOVAS FUNÇÕES PARA PONTUAÇÃO
+export const fetchPontuacaoTikTokData = async () => {
+  try {
+    const response = await api.get("/cartao/pontuacao/tiktok")
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados de pontuação do TikTok:", error)
+    throw error
+  }
+}
+
+export const fetchPontuacaoMetaData = async () => {
+  try {
+    const response = await api.get("/cartao/pontuacao/meta")
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados de pontuação do Meta:", error)
+    throw error
+  }
+}
+
+export const fetchPontuacaoPinterestData = async () => {
+  try {
+    const response = await api.get("/cartao/pontuacao/pinterest")
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados de pontuação do Pinterest:", error)
+    throw error
+  }
+}
+
+export const fetchPontuacaoLinkedInData = async () => {
+  try {
+    const response = await api.get("/cartao/pontuacao/linkedin")
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados de pontuação do LinkedIn:", error)
+    throw error
+  }
+}
+
+
+
+// NOVO Hook personalizado para usar os dados off-line
+export const useOfflineData = () => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchOfflineData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+
+
+// Função para buscar dados do GA4 completo
+export const fetchGA4CompletoData = async () => {
+  try {
+    const response = await api.get("/cartao/ga4-completo")
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados do GA4 completo:", error)
+    throw error
+  }
+}
+
+// NOVA FUNÇÃO para buscar dados do GA4 Source
+export const fetchGA4SourceData = async () => {
+  try {
+    const response = await api.get("/cartao/ga4-source")
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados do GA4 source:", error)
+    throw error
+  }
+}
+
+// Função para buscar dados de imagem do Pinterest
+export const fetchPinterestImageData = async () => {
+  try {
+    const response = await api.get("/cartao/pinterest-imagem")
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados de imagem do Pinterest:", error)
+    throw error
+  }
+}
+
+
+// NOVOS HOOKS PARA PONTUAÇÃO
+const usePontuacaoData = (fetcher: () => Promise<any>) => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetcher()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [fetcher])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+export const usePontuacaoTikTokData = () => usePontuacaoData(fetchPontuacaoTikTokData)
+export const usePontuacaoMetaData = () => usePontuacaoData(fetchPontuacaoMetaData)
+export const usePontuacaoPinterestData = () => usePontuacaoData(fetchPontuacaoPinterestData)
+export const usePontuacaoLinkedInData = () => usePontuacaoData(fetchPontuacaoLinkedInData)
+
+
+// Tipos de dados para as APIs
+interface GA4ResumoData {
+  range: string
+  majorDimension: string
+  values: string[][]
+}
+
+interface GA4CompletoData {
+  range: string
+  majorDimension: string
+  values: string[][]
+}
+
+interface GA4SourceData {
+  range: string
+  majorDimension: string
+  values: string[][]
+}
+
+interface CartaoPinterestData {
+  range: string
+  majorDimension: string
+  values: string[][]
+}
+
+interface PinterestImageData {
+  range: string
+  majorDimension: string
+  values: string[][]
+}
+
+
+// Hook para dados GA4 Completo (substituir completamente)
+export const useGA4CompletoData = () => {
+  const [data, setData] = useState<GA4CompletoData | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchGA4CompletoData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+// NOVO Hook para dados GA4 Source
+export const useGA4SourceData = () => {
+  const [data, setData] = useState<GA4SourceData | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchGA4SourceData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+// Hook para dados do Pinterest (substituir completamente)
+export const useCartaoPinterestData = () => {
+  const [data, setData] = useState<CartaoPinterestData | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchCartaoPinterestData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+// Hook para dados de Imagem do Pinterest (substituir completamente)
+export const usePinterestImageData = () => {
+  const [data, setData] = useState<PinterestImageData | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchPinterestImageData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+// Função para buscar dados de benchmark
+export const fetchBenchmarkData = async () => {
+  try {
+    const response = await api.get("/cartao/benchmark")
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados de benchmark:", error)
+    throw error
+  }
+}
+
+// Hook personalizado para usar os dados de benchmark
+export const useBenchmarkData = () => {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchBenchmarkData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
