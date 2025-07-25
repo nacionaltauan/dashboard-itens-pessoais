@@ -118,9 +118,10 @@ const Capa: React.FC = () => {
         <div className="relative h-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600">
           <img
             src="/images/banner-background.webp"
-            alt="Campanha Cartões - Colecione Momentos"
-            className="w-full h-full object-cover"
+            alt="Campanha BrasilSeg - Itens pessoais"
+            className="w-full h-full object-cover [object-position:right_25%] relative"
           />
+
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg">

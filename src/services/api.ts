@@ -4,9 +4,18 @@ import React, { useState } from "react"
 import axios from "axios"
 
 const API_BASE_URL = "https://api-google-sheets-7zph.vercel.app"
+const API_NACIONAL_URL = "https://api-nacional.vercel.app"
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+})
+
+export const apiNacional = axios.create({
+  baseURL: API_NACIONAL_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
@@ -18,6 +27,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     console.error("API Error:", error)
+    return Promise.reject(error)
+  },
+)
+
+apiNacional.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("API Nacional Error:", error)
     return Promise.reject(error)
   },
 )
@@ -42,6 +59,43 @@ export const fetchResumoData = async () => {
     console.error("Erro ao buscar dados do resumo:", error)
     throw error
   }
+}
+
+// NOVA FUNÇÃO para buscar dados da API Nacional - Estratégia Online
+export const fetchEstrategiaOnlineData = async () => {
+  try {
+    const response = await apiNacional.get("/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Resumo")
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados da Estratégia Online:", error)
+    throw error
+  }
+}
+
+// NOVO HOOK para dados da Estratégia Online
+export const useEstrategiaOnlineData = () => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchEstrategiaOnlineData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
 }
 
 // NOVAS FUNÇÕES PARA OS CRIATIVOS
@@ -524,10 +578,6 @@ export const useConsolidadoVideoData = () => {
   return { data, loading, error, refetch: loadData }
 }
 
-
-
-
-
 // NOVA FUNÇÃO para buscar dados off-line
 export const fetchOfflineData = async () => {
   try {
@@ -538,8 +588,6 @@ export const fetchOfflineData = async () => {
     throw error
   }
 }
-
-
 
 // NOVAS FUNÇÕES PARA PONTUAÇÃO
 export const fetchPontuacaoTikTokData = async () => {
@@ -582,8 +630,6 @@ export const fetchPontuacaoLinkedInData = async () => {
   }
 }
 
-
-
 // NOVO Hook personalizado para usar os dados off-line
 export const useOfflineData = () => {
   const [data, setData] = React.useState<any>(null)
@@ -609,8 +655,6 @@ export const useOfflineData = () => {
 
   return { data, loading, error, refetch: loadData }
 }
-
-
 
 // Função para buscar dados do GA4 completo
 export const fetchGA4CompletoData = async () => {
@@ -645,7 +689,6 @@ export const fetchPinterestImageData = async () => {
   }
 }
 
-
 // NOVOS HOOKS PARA PONTUAÇÃO
 const usePontuacaoData = (fetcher: () => Promise<any>) => {
   const [data, setData] = React.useState<any>(null)
@@ -677,38 +720,12 @@ export const usePontuacaoMetaData = () => usePontuacaoData(fetchPontuacaoMetaDat
 export const usePontuacaoPinterestData = () => usePontuacaoData(fetchPontuacaoPinterestData)
 export const usePontuacaoLinkedInData = () => usePontuacaoData(fetchPontuacaoLinkedInData)
 
-
 // Tipos de dados para as APIs
-interface GA4ResumoData {
-  range: string
-  majorDimension: string
-  values: string[][]
-}
-
-interface GA4CompletoData {
-  range: string
-  majorDimension: string
-  values: string[][]
-}
-
 interface GA4SourceData {
   range: string
   majorDimension: string
   values: string[][]
 }
-
-interface CartaoPinterestData {
-  range: string
-  majorDimension: string
-  values: string[][]
-}
-
-interface PinterestImageData {
-  range: string
-  majorDimension: string
-  values: string[][]
-}
-
 
 // Hook para dados GA4 Completo (substituir completamente)
 export const useGA4CompletoData = () => {
