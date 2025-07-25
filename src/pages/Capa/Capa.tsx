@@ -147,7 +147,7 @@ const Capa: React.FC = () => {
               <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
               <div>
                 <p className="font-semibold text-gray-900 text-sm">Campanha:</p>
-                <p className="text-gray-700 text-sm">BRASILSEG - Itens Pessoais</p>
+                <p className="text-gray-700 text-sm">BrasilSeg - Itens Pessoais</p>
               </div>
             </div>
             
