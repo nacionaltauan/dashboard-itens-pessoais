@@ -1,38 +1,62 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback, FC } from "react"
 import { Calendar, Filter } from "lucide-react"
-import { useCCBBMetaData } from "../../services/api"
+import { apiNacional } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 
 interface CreativeData {
   date: string
-  adName: string
-  adCreativeImageUrl: string
-  adCreativeThumbnailUrl: string
   campaignName: string
+  creativeTitle: string
   reach: number
-  frequency: number
   impressions: number
-  cost: number
-  linkClicks: number
-  cpc: number
-  pageEngagements: number
-  postEngagements: number
-  postReactions: number
-  costPerPostEngagement: number
-  videoWatches25: number
-  videoWatches50: number
-  videoWatches75: number
-  videoWatches100: number
-  videoPlayActions: number
-  landingPageViews: number
+  clicks: number
+  totalSpent: number
+  videoViews: number
+  videoViews25: number
+  videoViews50: number
+  videoViews75: number
+  videoCompletions: number
+  videoStarts: number
+  totalEngagements: number
   cpm: number
+  cpc: number
+  ctr: number
+  frequency: number
 }
 
-const CriativosMeta: React.FC = () => {
-  const { data: apiData, loading, error } = useCCBBMetaData()
+// Hook específico para buscar dados Meta - Tratado
+const useMetaTratadoData = () => {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await apiNacional.get(
+        "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Meta%20-%20Tratado"
+      )
+      setData(response.data.data) // Acessa response.data.data baseado na estrutura da resposta
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+const CriativosMeta: FC = () => {
+  const { data: apiData, loading, error } = useMetaTratadoData()
   const [processedData, setProcessedData] = useState<CreativeData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [selectedPraca, setSelectedPraca] = useState<string>("")
@@ -59,51 +83,45 @@ const CriativosMeta: React.FC = () => {
           }
 
           const date = row[headers.indexOf("Date")] || ""
-          const adName = row[headers.indexOf("Ad name")] || ""
-          const adCreativeImageUrl = row[headers.indexOf("Ad creative image URL")] || ""
-          const adCreativeThumbnailUrl = row[headers.indexOf("Ad creative thumbnail URL")] || ""
           const campaignName = row[headers.indexOf("Campaign name")] || ""
+          const creativeTitle = row[headers.indexOf("Creative title")] || ""
           const reach = parseInteger(row[headers.indexOf("Reach")])
-          const frequency = parseNumber(row[headers.indexOf("Frequency")])
           const impressions = parseInteger(row[headers.indexOf("Impressions")])
-          const cost = parseNumber(row[headers.indexOf("Cost")])
-          const linkClicks = parseInteger(row[headers.indexOf("Link clicks")])
-          const cpc = parseNumber(row[headers.indexOf("CPC (cost per link click)")])
-          const pageEngagements = parseInteger(row[headers.indexOf("Page engagements")])
-          const postEngagements = parseInteger(row[headers.indexOf("Post engagements")])
-          const postReactions = parseInteger(row[headers.indexOf("Post reactions")])
-          const costPerPostEngagement = parseNumber(row[headers.indexOf("Cost per post engagement")])
-          const videoWatches25 = parseInteger(row[headers.indexOf("Video watches at 25%")])
-          const videoWatches50 = parseInteger(row[headers.indexOf("Video watches at 50%")])
-          const videoWatches75 = parseInteger(row[headers.indexOf("Video watches at 75%")])
-          const videoWatches100 = parseInteger(row[headers.indexOf("Video watches at 100%")])
-          const videoPlayActions = parseInteger(row[headers.indexOf("Video play actions")])
-          const landingPageViews = parseInteger(row[headers.indexOf("Landing page views")])
-          const cpm = parseNumber(row[headers.indexOf("CPM (cost per 1000 impressions)")])
+          const clicks = parseInteger(row[headers.indexOf("Clicks")])
+          const totalSpent = parseNumber(row[headers.indexOf("Total spent")])
+          const videoViews = parseInteger(row[headers.indexOf("Video views ")])
+          const videoViews25 = parseInteger(row[headers.indexOf("Video views at 25%")])
+          const videoViews50 = parseInteger(row[headers.indexOf("Video views at 50%")])
+          const videoViews75 = parseInteger(row[headers.indexOf("Video views at 75%")])
+          const videoCompletions = parseInteger(row[headers.indexOf("Video completions ")])
+          const videoStarts = parseInteger(row[headers.indexOf("Video starts")])
+          const totalEngagements = parseInteger(row[headers.indexOf("Total engagements")])
+
+          // Calcular métricas derivadas
+          const cpm = impressions > 0 ? totalSpent / (impressions / 1000) : 0
+          const cpc = clicks > 0 ? totalSpent / clicks : 0
+          const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0
+          const frequency = reach > 0 ? impressions / reach : 0
 
           return {
             date,
-            adName,
-            adCreativeImageUrl,
-            adCreativeThumbnailUrl,
             campaignName,
+            creativeTitle,
             reach,
-            frequency,
             impressions,
-            cost,
-            linkClicks,
-            cpc,
-            pageEngagements,
-            postEngagements,
-            postReactions,
-            costPerPostEngagement,
-            videoWatches25,
-            videoWatches50,
-            videoWatches75,
-            videoWatches100,
-            videoPlayActions,
-            landingPageViews,
+            clicks,
+            totalSpent,
+            videoViews,
+            videoViews25,
+            videoViews50,
+            videoViews75,
+            videoCompletions,
+            videoStarts,
+            totalEngagements,
             cpm,
+            cpc,
+            ctr,
+            frequency,
           } as CreativeData
         })
         .filter((item: CreativeData) => item.date && item.impressions > 0)
@@ -112,7 +130,15 @@ const CriativosMeta: React.FC = () => {
 
       // Definir range de datas inicial
       if (processed.length > 0) {
-        const dates = processed.map((item) => new Date(item.date)).sort((a, b) => a.getTime() - b.getTime())
+        const dates = processed.map((item) => {
+          // Converter formato dd/mm/yyyy para yyyy-mm-dd
+          const dateParts = item.date.split("/")
+          if (dateParts.length === 3) {
+            return new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`)
+          }
+          return new Date(item.date)
+        }).sort((a, b) => a.getTime() - b.getTime())
+        
         const startDate = dates[0].toISOString().split("T")[0]
         const endDate = dates[dates.length - 1].toISOString().split("T")[0]
         setDateRange({ start: startDate, end: endDate })
@@ -122,9 +148,9 @@ const CriativosMeta: React.FC = () => {
       const pracaSet = new Set<string>()
       processed.forEach((item) => {
         if (item.campaignName) {
-          // Regex melhorada para capturar diferentes padrões: VÍDEO - PRAÇA, VÍDEO — PRAÇA, FACEBOOK - PRAÇA
-          const match = item.campaignName.match(/(?:VÍDEO|FACEBOOK)\s*[-—]\s*([A-Z]{2,3})(?:\s*\||$)/)
-          if (match && match[1]) {
+          // Regex para capturar diferentes padrões de praça
+          const match = item.campaignName.match(/(?:BSE-\d+_)?([A-Z]{2,3})(?:_|$)/)
+          if (match && match[1] && match[1] !== "BSE") {
             pracaSet.add(match[1])
           }
         }
@@ -141,7 +167,15 @@ const CriativosMeta: React.FC = () => {
     // Filtro por período
     if (dateRange.start && dateRange.end) {
       filtered = filtered.filter((item) => {
-        const itemDate = new Date(item.date)
+        // Converter formato dd/mm/yyyy para Date
+        const dateParts = item.date.split("/")
+        let itemDate: Date
+        if (dateParts.length === 3) {
+          itemDate = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`)
+        } else {
+          itemDate = new Date(item.date)
+        }
+        
         const startDate = new Date(dateRange.start)
         const endDate = new Date(dateRange.end)
         return itemDate >= startDate && itemDate <= endDate
@@ -151,7 +185,7 @@ const CriativosMeta: React.FC = () => {
     // Filtro por praça
     if (selectedPraca) {
       filtered = filtered.filter((item) => {
-        const match = item.campaignName.match(/(?:VÍDEO|FACEBOOK)\s*[-—]\s*([A-Z]{2,3})(?:\s*\||$)/)
+        const match = item.campaignName.match(/(?:BSE-\d+_)?([A-Z]{2,3})(?:_|$)/)
         return match && match[1] === selectedPraca
       })
     }
@@ -159,37 +193,35 @@ const CriativosMeta: React.FC = () => {
     // Agrupar por criativo APÓS a filtragem
     const groupedData: Record<string, CreativeData> = {}
     filtered.forEach((item) => {
-      const key = `${item.adName}_${item.adCreativeImageUrl}`
+      const key = `${item.creativeTitle}_${item.campaignName}`
       if (!groupedData[key]) {
         groupedData[key] = { ...item }
       } else {
         groupedData[key].impressions += item.impressions
         groupedData[key].reach += item.reach
-        groupedData[key].linkClicks += item.linkClicks
-        groupedData[key].cost += item.cost
-        groupedData[key].pageEngagements += item.pageEngagements
-        groupedData[key].postEngagements += item.postEngagements
-        groupedData[key].postReactions += item.postReactions
-        groupedData[key].videoWatches25 += item.videoWatches25
-        groupedData[key].videoWatches50 += item.videoWatches50
-        groupedData[key].videoWatches75 += item.videoWatches75
-        groupedData[key].videoWatches100 += item.videoWatches100
-        groupedData[key].videoPlayActions += item.videoPlayActions
-        groupedData[key].landingPageViews += item.landingPageViews
+        groupedData[key].clicks += item.clicks
+        groupedData[key].totalSpent += item.totalSpent
+        groupedData[key].videoViews += item.videoViews
+        groupedData[key].videoViews25 += item.videoViews25
+        groupedData[key].videoViews50 += item.videoViews50
+        groupedData[key].videoViews75 += item.videoViews75
+        groupedData[key].videoCompletions += item.videoCompletions
+        groupedData[key].videoStarts += item.videoStarts
+        groupedData[key].totalEngagements += item.totalEngagements
       }
     })
 
     // Recalcular métricas derivadas
     const finalData = Object.values(groupedData).map((item) => ({
       ...item,
-      cpm: item.impressions > 0 ? item.cost / (item.impressions / 1000) : 0,
-      cpc: item.linkClicks > 0 ? item.cost / item.linkClicks : 0,
+      cpm: item.impressions > 0 ? item.totalSpent / (item.impressions / 1000) : 0,
+      cpc: item.clicks > 0 ? item.totalSpent / item.clicks : 0,
+      ctr: item.impressions > 0 ? (item.clicks / item.impressions) * 100 : 0,
       frequency: item.reach > 0 ? item.impressions / item.reach : 0,
-      costPerPostEngagement: item.postEngagements > 0 ? item.cost / item.postEngagements : 0,
     }))
 
-    // Ordenar por investimento (custo) decrescente
-    finalData.sort((a, b) => b.cost - a.cost)
+    // Ordenar por investimento (totalSpent) decrescente
+    finalData.sort((a, b) => b.totalSpent - a.totalSpent)
 
     return finalData
   }, [processedData, selectedPraca, dateRange])
@@ -206,12 +238,12 @@ const CriativosMeta: React.FC = () => {
   // Calcular totais
   const totals = useMemo(() => {
     return {
-      investment: filteredData.reduce((sum, item) => sum + item.cost, 0),
+      investment: filteredData.reduce((sum, item) => sum + item.totalSpent, 0),
       impressions: filteredData.reduce((sum, item) => sum + item.impressions, 0),
       reach: filteredData.reduce((sum, item) => sum + item.reach, 0),
-      linkClicks: filteredData.reduce((sum, item) => sum + item.linkClicks, 0),
-      postEngagements: filteredData.reduce((sum, item) => sum + item.postEngagements, 0),
-      videoPlayActions: filteredData.reduce((sum, item) => sum + item.videoPlayActions, 0),
+      clicks: filteredData.reduce((sum, item) => sum + item.clicks, 0),
+      videoViews: filteredData.reduce((sum, item) => sum + item.videoViews, 0),
+      totalEngagements: filteredData.reduce((sum, item) => sum + item.totalEngagements, 0),
       avgCpm: 0,
       avgCpc: 0,
       avgFrequency: 0,
@@ -222,9 +254,9 @@ const CriativosMeta: React.FC = () => {
   // Calcular médias
   if (filteredData.length > 0) {
     totals.avgCpm = totals.impressions > 0 ? totals.investment / (totals.impressions / 1000) : 0
-    totals.avgCpc = totals.linkClicks > 0 ? totals.investment / totals.linkClicks : 0
+    totals.avgCpc = totals.clicks > 0 ? totals.investment / totals.clicks : 0
     totals.avgFrequency = totals.reach > 0 ? totals.impressions / totals.reach : 0
-    totals.ctr = totals.impressions > 0 ? (totals.linkClicks / totals.impressions) * 100 : 0
+    totals.ctr = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0
   }
 
   // Função para formatar números
@@ -246,20 +278,16 @@ const CriativosMeta: React.FC = () => {
     })
   }
 
-  // Função para truncar texto
-  const truncateText = (text: string, maxLength: number): string => {
-    if (text.length <= maxLength) return text
-    return text.substring(0, maxLength) + "..."
-  }
-
   // Função para mapear códigos de praça para nomes de cidade
   const getPracaName = (codigo: string): string => {
     const pracaMap: Record<string, string> = {
       BSB: "Brasília",
-      BH: "Belo Horizonte",
+      BH: "Belo Horizonte", 
       RJ: "Rio de Janeiro",
       SP: "São Paulo",
       SSA: "Salvador",
+      SAO: "São Paulo",
+      NACIONAL: "Nacional"
     }
     return pracaMap[codigo] || codigo
   }
@@ -331,26 +359,7 @@ const CriativosMeta: React.FC = () => {
               />
             </div>
           </div>
-
-          {/* Filtro de Praça */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-              <Filter className="w-4 h-4 mr-2" />
-              Praça
-            </label>
-            <select
-              value={selectedPraca}
-              onChange={(e) => setSelectedPraca(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            >
-              <option value="">Todas as praças</option>
-              {availablePracas.map((praca, index) => (
-                <option key={index} value={praca}>
-                  {getPracaName(praca)}
-                </option>
-              ))}
-            </select>
-          </div>
+          
 
           {/* Informações adicionais */}
           <div>
@@ -381,7 +390,7 @@ const CriativosMeta: React.FC = () => {
 
         <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
           <div className="text-sm text-gray-600 mb-1">Cliques</div>
-          <div className="text-lg font-bold text-gray-900">{formatNumber(totals.linkClicks)}</div>
+          <div className="text-lg font-bold text-gray-900">{formatNumber(totals.clicks)}</div>
         </div>
 
         <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
@@ -411,65 +420,42 @@ const CriativosMeta: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-blue-600 text-white">
-                <th className="text-left py-3 px-4 font-semibold w-[5rem]">Imagem</th>
                 <th className="text-left py-3 px-4 font-semibold">Criativo</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">Investimento</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">Impressões</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">Alcance</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">Cliques</th>
+                <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">Visualizações</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">CPM</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">CPC</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">CTR</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedData.map((creative, index) => {
-                const ctr = creative.impressions > 0 ? (creative.linkClicks / creative.impressions) * 100 : 0
-
-                return (
-                  <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
-                    <td className="py-3 px-4 w-[5rem]">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-                        {creative.adCreativeImageUrl || creative.adCreativeThumbnailUrl ? (
-                          <img
-                            src={creative.adCreativeImageUrl || creative.adCreativeThumbnailUrl || "/placeholder.svg"}
-                            alt="Criativo"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement
-                              target.style.display = "none"
-                              if (target.parentElement) {
-                                target.parentElement.innerHTML = '<div class="text-gray-400 text-xs">Sem imagem</div>'
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="text-gray-400 text-xs">Sem imagem</div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="">
-                        <p className="font-medium text-gray-900 text-sm leading-tight whitespace-normal break-words">
-                          {creative.adName}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1 leading-tight whitespace-normal break-words">
-                          {creative.campaignName}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-right font-semibold min-w-[7.5rem]">
-                      {formatCurrency(creative.cost)}
-                    </td>
-                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.impressions)}</td>
-                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.reach)}</td>
-                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.linkClicks)}</td>
-                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatCurrency(creative.cpm)}</td>
-                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatCurrency(creative.cpc)}</td>
-                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{ctr.toFixed(2)}%</td>
-                  </tr>
-                )
-              })}
+              {paginatedData.map((creative, index) => (
+                <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
+                  <td className="py-3 px-4">
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm leading-tight whitespace-normal break-words">
+                        {creative.creativeTitle}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 leading-tight whitespace-normal break-words">
+                        {creative.campaignName}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-right font-semibold min-w-[7.5rem]">
+                    {formatCurrency(creative.totalSpent)}
+                  </td>
+                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.impressions)}</td>
+                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.reach)}</td>
+                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.clicks)}</td>
+                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.videoViews)}</td>
+                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatCurrency(creative.cpm)}</td>
+                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatCurrency(creative.cpc)}</td>
+                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{creative.ctr.toFixed(2)}%</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

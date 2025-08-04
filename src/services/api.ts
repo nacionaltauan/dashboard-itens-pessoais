@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import axios from "axios"
 
 const API_BASE_URL = "https://api-google-sheets-7zph.vercel.app"
@@ -977,6 +977,45 @@ export const usePinterestNacionalData = () => {
   }, [])
 
   React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+// NOVA FUNÇÃO para buscar dados do Meta - Tratado
+export const fetchMetaTratadoData = async () => {
+  try {
+    const response = await apiNacional.get(
+      "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Meta%20-%20Tratado",
+    )
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados do Meta - Tratado:", error)
+    throw error
+  }
+}
+
+// NOVO HOOK para dados do Meta - Tratado
+export const useMetaTratadoData = () => {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchMetaTratadoData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
     loadData()
   }, [loadData])
 

@@ -32,126 +32,89 @@ interface CreativeData {
   paidComments: number
   paidShares: number
   paidFollows: number
-  praca: string
-}
-
-// Mapeamento de praças para nomes completos
-const pracaMapping: Record<string, string> = {
-  BSB: "Brasília",
-  BH: "Belo Horizonte",
-  RJ: "Rio de Janeiro",
-  SP: "São Paulo",
-  SSA: "Salvador",
 }
 
 const CriativosTikTok: React.FC = () => {
   const { data: apiData, loading, error } = useTikTokNacionalData()
   const [processedData, setProcessedData] = useState<CreativeData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
-  const [selectedPraca, setSelectedPraca] = useState<string>("")
-  const [availableCampaigns, setAvailableCampaigns] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
   // Processar dados da API
-  useEffect(() => {
-    if (apiData?.values) {
-      const headers = apiData.values[0]
-      const rows = apiData.values.slice(1)
+ useEffect(() => {
+  const values = apiData?.data?.values;
+  if (!values || values.length <= 1) return;
 
-      const processed: CreativeData[] = rows
-        .map((row: string[]) => {
-          const parseNumber = (value: string) => {
-            if (!value || value === "") return 0
-            return Number.parseFloat(value.replace(/[R$\s.]/g, "").replace(",", ".")) || 0
-          }
+  const headers = values[0];
+  const rows = values.slice(1);
 
-          const parseInteger = (value: string) => {
-            if (!value || value === "") return 0
-            return Number.parseInt(value.replace(/[.\s]/g, "").replace(",", "")) || 0
-          }
+  const parseNumber = (v: string) => {
+    if (!v?.trim()) return 0;
+    const clean = v.replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
+    return isNaN(+clean) ? 0 : +clean;
+  };
 
-          const date = row[headers.indexOf("Date")] || ""
-          const campaignName = row[headers.indexOf("Campaign Name")] || ""
-          const adGroupName = row[headers.indexOf("Ad Group Name")] || ""
-          const adName = row[headers.indexOf("Ad Name")] || ""
-          const adText = row[headers.indexOf("Ad Text")] || ""
-          const videoThumbnailUrl = row[headers.indexOf("Video Thumbnail URL")] || ""
-          const impressions = parseInteger(row[headers.indexOf("Impressions")])
-          const clicks = parseInteger(row[headers.indexOf("Clicks")])
-          const cost = parseNumber(row[headers.indexOf("Cost")])
-          const cpc = parseNumber(row[headers.indexOf("CPC")])
-          const cpm = parseNumber(row[headers.indexOf("CPM")])
-          const reach = parseInteger(row[headers.indexOf("Reach")])
-          const frequency = parseNumber(row[headers.indexOf("Frequency")])
-          const results = parseInteger(row[headers.indexOf("Results")])
-          const videoViews = parseInteger(row[headers.indexOf("Video Views")])
-          const twoSecondVideoViews = parseInteger(row[headers.indexOf("2-Second Video Views")])
-          const videoViews25 = parseInteger(row[headers.indexOf("Video Views at 25%")])
-          const videoViews50 = parseInteger(row[headers.indexOf("Video Views at 50%")])
-          const videoViews75 = parseInteger(row[headers.indexOf("Video Views at 75%")])
-          const videoViews100 = parseInteger(row[headers.indexOf("Video Views at 100%")])
-          const profileVisits = parseInteger(row[headers.indexOf("Profile Visits")])
-          const paidLikes = parseInteger(row[headers.indexOf("Paid Likes")])
-          const paidComments = parseInteger(row[headers.indexOf("Paid Comments")])
-          const paidShares = parseInteger(row[headers.indexOf("Paid Shares")])
-          const paidFollows = parseInteger(row[headers.indexOf("Paid Follows")])
-          const praca = row[headers.indexOf("City")] || ""
+  const parseInteger = (v: string) => {
+    if (!v?.trim()) return 0;
+    const clean = v.replace(/\./g, "").replace(",", "");
+    const n = parseInt(clean, 10);
+    return isNaN(n) ? 0 : n;
+  };
 
-          return {
-            date,
-            campaignName,
-            adGroupName,
-            adName,
-            adText,
-            videoThumbnailUrl,
-            impressions,
-            clicks,
-            cost,
-            cpc,
-            cpm,
-            reach,
-            frequency,
-            results,
-            videoViews,
-            twoSecondVideoViews,
-            videoViews25,
-            videoViews50,
-            videoViews75,
-            videoViews100,
-            profileVisits,
-            paidLikes,
-            paidComments,
-            paidShares,
-            paidFollows,
-            praca,
-          } as CreativeData
-        })
-        .filter((item: CreativeData) => item.date && item.impressions > 0)
+  // 1) faço o map e trato como CreativeData[]
+  const mapped: CreativeData[] = rows.map((row: string[]) => {
+    const get = (field: string) => {
+      const idx = headers.indexOf(field);
+      return idx >= 0 ? row[idx] ?? "" : "";
+    };
+    return {
+      date: get("Date"),
+      campaignName: get("Campaign name"),
+      adGroupName: get("Ad group name"),
+      adName: get("Ad name"),
+      adText: get("Ad text"),
+      videoThumbnailUrl: get("Video thumbnail URL"),
+      impressions: parseInteger(get("Impressions")),
+      clicks: parseInteger(get("Clicks")),
+      cost: parseNumber(get("Cost")),
+      cpc: parseNumber(get("CPC")),
+      cpm: parseNumber(get("CPM")),
+      reach: parseInteger(get("Reach")),
+      frequency: parseNumber(get("Frequency")),
+      results: parseInteger(get("Results")),
+      videoViews: parseInteger(get("Video views")),
+      twoSecondVideoViews: parseInteger(get("2-second video views")),
+      videoViews25: parseInteger(get("Video views at 25%")),
+      videoViews50: parseInteger(get("Video views at 50%")),
+      videoViews75: parseInteger(get("Video views at 75%")),
+      videoViews100: parseInteger(get("Video views at 100%")),
+      profileVisits: parseInteger(get("Profile visits")),
+      paidLikes: parseInteger(get("Paid likes")),
+      paidComments: parseInteger(get("Paid comments")),
+      paidShares: parseInteger(get("Paid shares")),
+      paidFollows: parseInteger(get("Paid follows")),
+    };
+  });
 
-      setProcessedData(processed)
+  // 2) explicitamente tipamos o parâmetro do filter
+  const processed: CreativeData[] = mapped.filter(
+    (item: CreativeData): item is CreativeData => Boolean(item.date)
+  );
 
-      // Definir range de datas inicial
-      if (processed.length > 0) {
-        const dates = processed.map((item) => new Date(item.date)).sort((a, b) => a.getTime() - b.getTime())
-        const startDate = dates[0].toISOString().split("T")[0]
-        const endDate = dates[dates.length - 1].toISOString().split("T")[0]
-        setDateRange({ start: startDate, end: endDate })
-      }
+  setProcessedData(processed);
 
-      // Extrair praças únicas
-      const pracaSet = new Set<string>()
-      processed.forEach((item) => {
-        if (item.praca) {
-          pracaSet.add(item.praca)
-        }
-      })
-      const pracas = Array.from(pracaSet).filter(Boolean).sort()
-      setAvailableCampaigns(pracas) // Reusing the same state variable
-    }
-  }, [apiData])
+    const allDates = processed
+      .map((i) => new Date(i.date))
+      .sort((a, b) => a.getTime() - b.getTime());
 
-  // Filtrar dados
+    setDateRange({
+      start: allDates[0].toISOString().slice(0, 10),
+      end: allDates[allDates.length - 1].toISOString().slice(0, 10),
+    });
+  }, [apiData]);
+
+  // Filtrar dados (removido filtro de praça)
   const filteredData = useMemo(() => {
     let filtered = processedData
 
@@ -165,15 +128,10 @@ const CriativosTikTok: React.FC = () => {
       })
     }
 
-    // Filtro por praça
-    if (selectedPraca) {
-      filtered = filtered.filter((item) => item.praca === selectedPraca)
-    }
-
     // Agrupar por criativo APÓS a filtragem
     const groupedData: Record<string, CreativeData> = {}
     filtered.forEach((item) => {
-      const key = `${item.adName}_${item.videoThumbnailUrl}`
+      const key = `${item.adName}_${item.videoThumbnailUrl || 'no-thumbnail'}`
       if (!groupedData[key]) {
         groupedData[key] = { ...item }
       } else {
@@ -208,7 +166,7 @@ const CriativosTikTok: React.FC = () => {
     finalData.sort((a, b) => b.cost - a.cost)
 
     return finalData
-  }, [processedData, selectedPraca, dateRange])
+  }, [processedData, dateRange])
 
   // Paginação
   const paginatedData = useMemo(() => {
@@ -265,12 +223,6 @@ const CriativosTikTok: React.FC = () => {
     })
   }
 
-  // Função para truncar texto
-  const truncateText = (text: string, maxLength: number): string => {
-    if (text.length <= maxLength) return text
-    return text.substring(0, maxLength) + "..."
-  }
-
   if (loading) {
     return <Loading message="Carregando criativos TikTok..." />
   }
@@ -279,11 +231,13 @@ const CriativosTikTok: React.FC = () => {
     return (
       <div className="bg-red-50/90 backdrop-blur-sm border border-red-200 rounded-lg p-4">
         <p className="text-red-600">Erro ao carregar dados: {error.message}</p>
+        <p className="text-red-500 text-sm mt-2">
+          Verifique se a API está funcionando corretamente: 
+          https://api-nacional.vercel.app/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=TikTok
+        </p>
       </div>
     )
   }
-
-  const availablePracas = availableCampaigns
 
   return (
     <div className="space-y-6 h-full flex flex-col">
@@ -309,7 +263,7 @@ const CriativosTikTok: React.FC = () => {
 
       {/* Filtros */}
       <div className="card-overlay rounded-lg shadow-lg p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Filtro de Data */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
@@ -330,26 +284,6 @@ const CriativosTikTok: React.FC = () => {
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
               />
             </div>
-          </div>
-
-          {/* Filtro de Campanha */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-              <Filter className="w-4 h-4 mr-2" />
-              Praça
-            </label>
-            <select
-              value={selectedPraca}
-              onChange={(e) => setSelectedPraca(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
-            >
-              <option value="">Todas as praças</option>
-              {availablePracas.map((praca, index) => (
-                <option key={index} value={praca}>
-                  {pracaMapping[praca] || praca}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Informações adicionais */}
