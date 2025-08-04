@@ -2,9 +2,13 @@
 
 import type React from "react"
 import { useState, useMemo } from "react"
-import { TrendingUp, Calendar, MousePointer, Clock, Users, BarChart3 } from "lucide-react"
+import { TrendingUp, Calendar, MousePointer, Clock, Users, BarChart3, MessageCircle, Phone, HandHeart } from "lucide-react"
 import Loading from "../../components/Loading/Loading"
-import { useGA4ResumoData, useGA4CompletoData, useGA4SourceData } from "../../services/api" // Importar nova API
+import { 
+  useGA4ResumoNacionalData, 
+  useGA4CompletoNacionalData, 
+  useGA4SourceNacionalData 
+} from "../../services/api" // Importar novas APIs
 import BrazilMap from "../../components/BrazilMap/BrazilMap" // Importar novo componente de mapa
 
 type TrafegoEngajamentoProps = {}
@@ -42,13 +46,13 @@ const API_TO_GEOJSON_STATE_NAMES: { [key: string]: string } = {
 }
 
 const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
-  const { data: ga4ResumoData, loading: resumoLoading, error: resumoError } = useGA4ResumoData()
-  const { data: ga4CompletoData, loading: completoLoading, error: completoError } = useGA4CompletoData()
-  const { data: ga4SourceData, loading: sourceLoading, error: sourceError } = useGA4SourceData() // Nova API
+  const { data: ga4ResumoData, loading: resumoLoading, error: resumoError } = useGA4ResumoNacionalData()
+  const { data: ga4CompletoData, loading: completoLoading, error: completoError } = useGA4CompletoNacionalData()
+  const { data: ga4SourceData, loading: sourceLoading, error: sourceError } = useGA4SourceNacionalData()
 
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
-    start: "2025-05-26",
-    end: "2025-06-31",
+    start: "2025-07-28",
+    end: "2025-08-04",
   })
 
   // Função para verificar se uma data está dentro do range selecionado
@@ -64,28 +68,36 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
   }
 
   // Função para obter cor do veículo/plataforma
-  const getPlataformaColor = (plataforma: string): string => {
+  const getPlataformaColor = (source: string): string => {
     const colors: { [key: string]: string } = {
-      Meta: "#1877f2",
-      TikTok: "#ff0050",
-      YouTube: "#ff0000",
-      Spotify: "#1DB954",
-      Netflix: "#E50914",
-      "Portal Forum": "#8b5cf6",
-      "Brasil 247": "#10b981",
-      Band: "#f59e0b",
-      "Globo.com": "#0066cc",
-      GDN: "#4285f4",
-      "Demand-Gen": "#34a853",
-      Orgânico: "#6b7280",
-      Outros: "#9ca3af",
+      "meta": "#1877f2",
+      "facebook": "#1877f2", 
+      "instagram": "#E4405F",
+      "tiktok": "#ff0050",
+      "youtube": "#ff0000",
+      "google": "#4285f4",
+      "criteo": "#ff6900",
+      "dms-social": "#1877f2",
+      "dms-google": "#4285f4",
+      "dms-youtube": "#ff0000",
+      "organic": "#6b7280",
+      "(not set)": "#9ca3af",
+      "Outros": "#9ca3af",
     }
-    return colors[plataforma] || "#6b7280"
+    
+    // Converter para lowercase para match
+    const lowerSource = source.toLowerCase()
+    return colors[lowerSource] || "#6b7280"
   }
 
   // Processamento dos dados da API GA4 Source (nova funcionalidade) com filtro de data
   const processedSourceData = useMemo(() => {
-    if (!ga4SourceData?.values || ga4SourceData.values.length <= 1) {
+    console.log("=== DEBUG SOURCE DATA ===")
+    console.log("GA4 Source Data:", ga4SourceData)
+    
+    // CORREÇÃO: Verificar se existe data.values ao invés de só values
+    if (!ga4SourceData?.data?.values || ga4SourceData.data.values.length <= 1) {
+      console.log("❌ Dados GA4 Source vazios ou inválidos")
       return {
         veiculosDetalhados: [],
         fontesPorPlataforma: {},
@@ -94,74 +106,93 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
       }
     }
 
-    const headers = ga4SourceData.values[0]
-    const rows = ga4SourceData.values.slice(1)
+    // CORREÇÃO: Acessar ga4SourceData.data.values
+    const headers = ga4SourceData.data.values[0]
+    const rows = ga4SourceData.data.values.slice(1)
+
+    console.log("Headers GA4 Source:", headers)
+    console.log("Total de linhas Source:", rows.length)
 
     // Índices das colunas
     const dateIndex = headers.indexOf("Date")
     const campaignIndex = headers.indexOf("User campaign name")
     const sourceIndex = headers.indexOf("Session manual source")
     const sessionsIndex = headers.indexOf("Sessions")
-    const plataformaIndex = headers.indexOf("Plataforma")
 
-    const veiculoData: { [key: string]: number } = {}
-    const plataformaData: { [key: string]: { [key: string]: number } } = {}
+    console.log("Índices Source encontrados:")
+    console.log("- Date:", dateIndex)
+    console.log("- Session manual source:", sourceIndex)
+    console.log("- Sessions:", sessionsIndex)
+
+    const sourceData: { [key: string]: number } = {}
     const dataResumo: { [key: string]: number } = {}
     let totalSessions = 0
 
-    rows.forEach((row: any[]) => {
+    console.log("=== PROCESSANDO LINHAS SOURCE ===")
+    rows.forEach((row: any[], index: number) => {
       const date = row[dateIndex] || ""
 
+      console.log(`Linha ${index}:`, {
+        date,
+        source: row[sourceIndex],
+        sessions: row[sessionsIndex]
+      })
+
       // Aplicar filtro de data
-      if (!isDateInRange(date)) return
+      if (!isDateInRange(date)) {
+        console.log(`❌ Data ${date} fora do range`)
+        return
+      }
 
       const sessions = Number.parseInt(row[sessionsIndex]) || 0
-      const plataforma = row[plataformaIndex] || "Outros"
-      const source = row[sourceIndex] || "(not set)"
+      const source = row[sourceIndex] || "Outros" // USAR SOURCE em vez de plataforma
       const campaign = row[campaignIndex] || "(not set)"
 
       if (sessions > 0) {
         totalSessions += sessions
 
-        // Agrupar por plataforma
-        veiculoData[plataforma] = (veiculoData[plataforma] || 0) + sessions
-
-        // Agrupar fontes por plataforma
-        if (!plataformaData[plataforma]) {
-          plataformaData[plataforma] = {}
-        }
-        if (source !== "(not set)") {
-          plataformaData[plataforma][source] = (plataformaData[plataforma][source] || 0) + sessions
-        }
+        // Agrupar por SOURCE em vez de plataforma
+        sourceData[source] = (sourceData[source] || 0) + sessions
 
         // Resumo por data
         if (date) {
           dataResumo[date] = (dataResumo[date] || 0) + sessions
         }
+
+        console.log(`✅ Processando source: ${source}, Sessions: ${sessions}`)
       }
     })
 
-    // Converter em arrays ordenados
-    const veiculosDetalhados = Object.entries(veiculoData)
-      .map(([plataforma, sessoes]) => ({
-        plataforma,
+    console.log("=== RESULTADOS FINAIS SOURCE ===")
+    console.log("Total Sessions:", totalSessions)
+    console.log("Source Data:", sourceData)
+
+    // Converter em arrays ordenados usando SOURCE
+    const veiculosDetalhados = Object.entries(sourceData)
+      .map(([source, sessoes]) => ({
+        plataforma: source, // manter nome da propriedade para compatibilidade
         sessoes,
         percentual: totalSessions > 0 ? (sessoes / totalSessions) * 100 : 0,
-        cor: getPlataformaColor(plataforma),
+        cor: getPlataformaColor(source),
       }))
       .sort((a, b) => b.sessoes - a.sessoes)
 
     return {
       veiculosDetalhados,
-      fontesPorPlataforma: plataformaData,
+      fontesPorPlataforma: sourceData,
       totalSessions,
       resumoPorData: dataResumo,
     }
   }, [ga4SourceData, dateRange])
 
-  // Processamento dos dados da API GA4 Resumo (para o mapa e gráficos existentes) com filtro de data
+  // ADICIONAR CONSOLE.LOG PARA DEBUG NO INÍCIO DO processedResumoData
   const processedResumoData = useMemo(() => {
-    if (!ga4ResumoData?.values || ga4ResumoData.values.length <= 1) {
+    console.log("=== DEBUG RESUMO DATA ===")
+    console.log("GA4 Resumo Data:", ga4ResumoData)
+    
+    // CORREÇÃO: Verificar se existe data.values ao invés de só values
+    if (!ga4ResumoData?.data?.values || ga4ResumoData.data.values.length <= 1) {
+      console.log("❌ Dados GA4 Resumo vazios ou inválidos")
       return {
         receptivo: {
           sessoesCampanha: 0,
@@ -169,14 +200,21 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
           cliquesCTAs: 0,
           duracaoSessoes: "00:00:00",
           taxaRejeicao: 0,
+          cliquesWhatsapp: 0,
+          cliquesContrateAgora: 0,
+          cliquesFaleConosco: 0,
         },
         dispositivos: [],
         dadosRegiao: {},
       }
     }
 
-    const headers = ga4ResumoData.values[0]
-    const rows = ga4ResumoData.values.slice(1)
+    // CORREÇÃO: Acessar ga4ResumoData.data.values
+    const headers = ga4ResumoData.data.values[0]
+    const rows = ga4ResumoData.data.values.slice(1)
+
+    console.log("Headers GA4 Resumo:", headers)
+    console.log("Total de linhas:", rows.length)
 
     // Índices das colunas
     const dateIndex = headers.indexOf("Date")
@@ -185,9 +223,22 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     const sessionsIndex = headers.indexOf("Sessions")
     const bounceRateIndex = headers.indexOf("Bounce rate")
     const avgDurationIndex = headers.indexOf("Average session duration")
-    const saibaMaisIndex = headers.indexOf("Key event count for web_pvc_cartoes_useourocard_saibamais")
-    const ctasIndex1 = headers.indexOf("Key event count for web_pvc_cartoes_useourocard_ctas")
-    const ctasIndex2 = headers.indexOf("Key event count for web_pvc_cartoes_use_ourocard_ctas")
+    
+    console.log("Índices encontrados:")
+    console.log("- Date:", dateIndex)
+    console.log("- Region:", regionIndex)
+    console.log("- Device category:", deviceIndex)
+    console.log("- Sessions:", sessionsIndex)
+    
+    // Novos CTAs
+    const whatsappIndex = headers.indexOf("Key event count for clique_whatsapp_flutuante")
+    const contrateAgoraIndex = headers.indexOf("Key event count for clique_cta_contrate_agora")
+    const faleConoscoIndex = headers.indexOf("Key event count for clique_cta_fale_com_a_gente")
+
+    console.log("Índices CTAs:")
+    console.log("- WhatsApp:", whatsappIndex)
+    console.log("- Contrate Agora:", contrateAgoraIndex)
+    console.log("- Fale Conosco:", faleConoscoIndex)
 
     let totalSessions = 0
     let totalSaibaMais = 0
@@ -195,30 +246,48 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     let totalBounceRate = 0
     let validRows = 0
     let totalCTAs = 0
+    let totalWhatsapp = 0
+    let totalContrateAgora = 0
+    let totalFaleConosco = 0
 
     const deviceData: { [key: string]: number } = {}
     const regionData: { [key: string]: number } = {}
 
-    rows.forEach((row: any[]) => {
+    console.log("=== PROCESSANDO LINHAS ===")
+    rows.forEach((row: any[], index: number) => {
       const date = row[dateIndex] || ""
+      
+      console.log(`Linha ${index}:`, {
+        date,
+        region: row[regionIndex],
+        device: row[deviceIndex],
+        sessions: row[sessionsIndex]
+      })
 
       // Aplicar filtro de data
-      if (!isDateInRange(date)) return
+      if (!isDateInRange(date)) {
+        console.log(`❌ Data ${date} fora do range`)
+        return
+      }
 
       const sessions = Number.parseInt(row[sessionsIndex]) || 0
-      const saibaMais = Number.parseInt(row[saibaMaisIndex]) || 0
       const duration = Number.parseFloat(row[avgDurationIndex]) || 0
       const bounceRate = Number.parseFloat(row[bounceRateIndex]) || 0
       const device = row[deviceIndex] || "Outros"
       const region = row[regionIndex] || "Outros"
-      const ctas1 = Number.parseInt(row[ctasIndex1]) || 0
-      const ctas2 = Number.parseInt(row[ctasIndex2]) || 0
+      
+      // Novos CTAs
+      const whatsapp = Number.parseInt(row[whatsappIndex]) || 0
+      const contrateAgora = Number.parseInt(row[contrateAgoraIndex]) || 0
+      const faleConosco = Number.parseInt(row[faleConoscoIndex]) || 0
 
-      totalCTAs += ctas1 + ctas2
+      totalWhatsapp += whatsapp
+      totalContrateAgora += contrateAgora
+      totalFaleConosco += faleConosco
+      totalCTAs += whatsapp + contrateAgora + faleConosco
 
       if (sessions > 0) {
         totalSessions += sessions
-        totalSaibaMais += saibaMais
         totalDuration += duration * sessions
         totalBounceRate += bounceRate * sessions
         validRows += sessions
@@ -227,12 +296,22 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
         deviceData[device] = (deviceData[device] || 0) + sessions
 
         // Regiões - Converter o nome do estado para o formato esperado pelo mapa
-        if (region !== "(not set)" && region.trim() !== "" && region !== " ") {
+        if (region !== "(not set)" && region.trim() !== "" && region !== " " && region !== "Outros") {
+          console.log(`✅ Processando região: ${region}`)
           const normalizedRegion = API_TO_GEOJSON_STATE_NAMES[region] || region
           regionData[normalizedRegion] = (regionData[normalizedRegion] || 0) + sessions
+          console.log(`   Normalizada para: ${normalizedRegion}, Sessions: ${sessions}`)
+        } else {
+          console.log(`❌ Região ignorada: ${region}`)
         }
       }
     })
+
+    console.log("=== RESULTADOS FINAIS ===")
+    console.log("Total Sessions:", totalSessions)
+    console.log("Device Data:", deviceData)
+    console.log("Region Data:", regionData)
+    console.log("CTAs:", { totalWhatsapp, totalContrateAgora, totalFaleConosco })
 
     // Converter em arrays ordenados
     const dispositivos = Object.entries(deviceData)
@@ -253,47 +332,86 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
 
     const avgBounceRate = validRows > 0 ? (totalBounceRate / validRows) * 100 : 0
 
-    return {
+    const resultado = {
       receptivo: {
         sessoesCampanha: totalSessions,
         cliquesSaibaMais: totalSaibaMais,
         cliquesCTAs: totalCTAs,
         duracaoSessoes: duracaoFormatada,
         taxaRejeicao: avgBounceRate,
+        cliquesWhatsapp: totalWhatsapp,
+        cliquesContrateAgora: totalContrateAgora,
+        cliquesFaleConosco: totalFaleConosco,
       },
       dispositivos,
       dadosRegiao: regionData,
     }
+
+    console.log("=== RESULTADO FINAL ===", resultado)
+    return resultado
   }, [ga4ResumoData, dateRange])
 
   // Processamento dos dados da NOVA API GA4 Completo (para os novos cards) com filtro de data
   const processedCompletoData = useMemo(() => {
-    if (!ga4CompletoData?.values || ga4CompletoData.values.length <= 1) {
+    console.log("=== DEBUG COMPLETO DATA ===")
+    console.log("GA4 Completo Data:", ga4CompletoData)
+    
+    // CORREÇÃO: Verificar se existe data.values ao invés de só values
+    if (!ga4CompletoData?.data?.values || ga4CompletoData.data.values.length <= 1) {
+      console.log("❌ Dados GA4 Completo vazios ou inválidos")
       return {
         totalSessions: 0,
         totalEvents: 0,
       }
     }
 
-    const headers = ga4CompletoData.values[0]
-    const rows = ga4CompletoData.values.slice(1)
+    // CORREÇÃO: Acessar ga4CompletoData.data.values
+    const headers = ga4CompletoData.data.values[0]
+    const rows = ga4CompletoData.data.values.slice(1)
+
+    console.log("Headers GA4 Completo:", headers)
+    console.log("Total de linhas Completo:", rows.length)
 
     const dateIndex = headers.indexOf("Date")
     const sessionsIndex = headers.indexOf("Sessions")
     const eventCountIndex = headers.indexOf("Event count")
 
+    console.log("Índices Completo encontrados:")
+    console.log("- Date:", dateIndex)
+    console.log("- Sessions:", sessionsIndex)
+    console.log("- Event count:", eventCountIndex)
+
     let totalSessions = 0
     let totalEvents = 0
 
-    rows.forEach((row: any[]) => {
+    console.log("=== PROCESSANDO LINHAS COMPLETO ===")
+    rows.forEach((row: any[], index: number) => {
       const date = row[dateIndex] || ""
 
-      // Aplicar filtro de data
-      if (!isDateInRange(date)) return
+      console.log(`Linha ${index}:`, {
+        date,
+        sessions: row[sessionsIndex],
+        events: row[eventCountIndex]
+      })
 
-      totalSessions += Number.parseInt(row[sessionsIndex]) || 0
-      totalEvents += Number.parseInt(row[eventCountIndex]) || 0
+      // Aplicar filtro de data
+      if (!isDateInRange(date)) {
+        console.log(`❌ Data ${date} fora do range`)
+        return
+      }
+
+      const sessions = Number.parseInt(row[sessionsIndex]) || 0
+      const events = Number.parseInt(row[eventCountIndex]) || 0
+
+      totalSessions += sessions
+      totalEvents += events
+
+      console.log(`✅ Sessions: ${sessions}, Events: ${events}`)
     })
+
+    console.log("=== RESULTADOS FINAIS COMPLETO ===")
+    console.log("Total Sessions:", totalSessions)
+    console.log("Total Events:", totalEvents)
 
     return {
       totalSessions,
@@ -356,76 +474,6 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     </div>
   )
 
-  // Função para converter hex para RGB
-  const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    return result
-      ? {
-          r: Number.parseInt(result[1], 16),
-          g: Number.parseInt(result[2], 16),
-          b: Number.parseInt(result[3], 16),
-        }
-      : { r: 0, g: 0, b: 0 }
-  }
-
-  // Função para converter RGB para hex
-  const rgbToHex = (r: number, g: number, b: number): string => {
-    return "#" + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1)
-  }
-
-  // Função para interpolar entre duas cores
-  const interpolateColor = (color1: string, color2: string, factor: number): string => {
-    const rgb1 = hexToRgb(color1)
-    const rgb2 = hexToRgb(color2)
-
-    const r = rgb1.r + (rgb2.r - rgb1.r) * factor
-    const g = rgb1.g + (rgb2.g - rgb1.g) * factor
-    const b = rgb1.b + (rgb2.b - rgb1.b) * factor
-
-    return rgbToHex(r, g, b)
-  }
-
-  const getIntensityColor = (sessions: number): string => {
-    // Pega todos os valores de sessões já mapeados no mapa
-    const values = Object.values(processedResumoData.dadosRegiao)
-    const maxSessions = values.length > 0 ? Math.max(...values) : 0
-
-    if (sessions === 0 || maxSessions === 0) return "#e5e7eb" // Sem dados
-
-    const intensity = sessions / maxSessions
-
-    // Nova paleta de cores
-    const colors = {
-      muitoAlta: "#03045E", // Muito alta
-      alta: "#023E8A", // Alta
-      medio: "#0077B6", // Médio
-      baixa: "#0096C7", // Baixa
-      muitoBaixa: "#00B4D8", // Muito Baixa
-    }
-
-    // Criar transições suaves entre os níveis
-    if (intensity >= 0.8) {
-      // Entre Muito Alta (100%) e Alta (80%)
-      const factor = (intensity - 0.8) / 0.2 // Normaliza entre 0 e 1
-      return interpolateColor(colors.alta, colors.muitoAlta, factor)
-    } else if (intensity >= 0.6) {
-      // Entre Alta (80%) e Médio (60%)
-      const factor = (intensity - 0.6) / 0.2
-      return interpolateColor(colors.medio, colors.alta, factor)
-    } else if (intensity >= 0.4) {
-      // Entre Médio (60%) e Baixa (40%)
-      const factor = (intensity - 0.4) / 0.2
-      return interpolateColor(colors.baixa, colors.medio, factor)
-    } else if (intensity >= 0.2) {
-      // Entre Baixa (40%) e Muito Baixa (20%)
-      const factor = (intensity - 0.2) / 0.2
-      return interpolateColor(colors.muitoBaixa, colors.baixa, factor)
-    } else {
-      // Muito Baixa (0% - 20%)
-      return colors.muitoBaixa
-    }
-  }
-
   if (resumoLoading || completoLoading || sourceLoading) {
     return <Loading message="Carregando dados de tráfego e engajamento..." />
   }
@@ -454,6 +502,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
           <p className="text-xs text-gray-600">Receptivo da campanha</p>
         </div>
       </div>
+      
       {/* Header Compacto com Filtro de Data e Cards de Métricas */}
       <div className="card-overlay rounded-lg shadow-lg p-4">
         <div className="grid grid-cols-12 gap-4 items-center">
@@ -496,34 +545,36 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-blue-600">Cliques SaibaMais</p>
+                  <p className="text-xs font-medium text-blue-600">WhatsApp</p>
                   <p className="text-lg font-bold text-blue-900">
-                    {formatNumber(processedResumoData.receptivo.cliquesSaibaMais)}
+                    {formatNumber(processedResumoData.receptivo.cliquesWhatsapp)}
                   </p>
                 </div>
-                <MousePointer className="w-6 h-6 text-blue-600" />
+                <MessageCircle className="w-6 h-6 text-blue-600" />
               </div>
             </div>
 
             <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-orange-600">Cliques nos CTAs</p>
+                  <p className="text-xs font-medium text-orange-600">Contrate Agora</p>
                   <p className="text-lg font-bold text-orange-900">
-                    {formatNumber(processedResumoData.receptivo.cliquesCTAs)}
+                    {formatNumber(processedResumoData.receptivo.cliquesContrateAgora)}
                   </p>
                 </div>
-                <MousePointer className="w-6 h-6 text-orange-600" />
+                <HandHeart className="w-6 h-6 text-orange-600" />
               </div>
             </div>
 
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-purple-600">Duração sessões</p>
-                  <p className="text-lg font-bold text-purple-900">{processedResumoData.receptivo.duracaoSessoes}</p>
+                  <p className="text-xs font-medium text-purple-600">Fale Conosco</p>
+                  <p className="text-lg font-bold text-purple-900">
+                    {formatNumber(processedResumoData.receptivo.cliquesFaleConosco)}
+                  </p>
                 </div>
-                <Clock className="w-6 h-6 text-purple-600" />
+                <Phone className="w-6 h-6 text-purple-600" />
               </div>
             </div>
 
@@ -637,15 +688,98 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
         </div>
       </div>
 
+      {/* Resumo dos CTAs */}
+      <div className="card-overlay rounded-lg shadow-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo de Conversões (CTAs)</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <MessageCircle className="w-5 h-5 text-blue-600 mr-2" />
+                <span className="text-sm font-medium text-blue-700">WhatsApp</span>
+              </div>
+              <span className="text-2xl font-bold text-blue-900">
+                {formatNumber(processedResumoData.receptivo.cliquesWhatsapp)}
+              </span>
+            </div>
+            <p className="text-xs text-blue-600">
+              {processedResumoData.receptivo.sessoesCampanha > 0 
+                ? `${((processedResumoData.receptivo.cliquesWhatsapp / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% das sessões`
+                : '0% das sessões'
+              }
+            </p>
+          </div>
+
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <HandHeart className="w-5 h-5 text-orange-600 mr-2" />
+                <span className="text-sm font-medium text-orange-700">Contrate Agora</span>
+              </div>
+              <span className="text-2xl font-bold text-orange-900">
+                {formatNumber(processedResumoData.receptivo.cliquesContrateAgora)}
+              </span>
+            </div>
+            <p className="text-xs text-orange-600">
+              {processedResumoData.receptivo.sessoesCampanha > 0 
+                ? `${((processedResumoData.receptivo.cliquesContrateAgora / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% das sessões`
+                : '0% das sessões'
+              }
+            </p>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <Phone className="w-5 h-5 text-purple-600 mr-2" />
+                <span className="text-sm font-medium text-purple-700">Fale Conosco</span>
+              </div>
+              <span className="text-2xl font-bold text-purple-900">
+                {formatNumber(processedResumoData.receptivo.cliquesFaleConosco)}
+              </span>
+            </div>
+            <p className="text-xs text-purple-600">
+              {processedResumoData.receptivo.sessoesCampanha > 0 
+                ? `${((processedResumoData.receptivo.cliquesFaleConosco / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% das sessões`
+                : '0% das sessões'
+              }
+            </p>
+          </div>
+        </div>
+
+        {/* Total de CTAs */}
+        <div className="mt-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <TrendingUp className="w-5 h-5 text-gray-600 mr-2" />
+              <span className="text-sm font-medium text-gray-700">Total de Conversões</span>
+            </div>
+            <div className="text-right">
+              <span className="text-3xl font-bold text-gray-900">
+                {formatNumber(processedResumoData.receptivo.cliquesCTAs)}
+              </span>
+              <p className="text-xs text-gray-600">
+                {processedResumoData.receptivo.sessoesCampanha > 0 
+                  ? `${((processedResumoData.receptivo.cliquesCTAs / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% taxa de conversão`
+                  : '0% taxa de conversão'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Observações */}
       <div className="card-overlay rounded-lg shadow-lg p-4">
         <p className="text-sm text-gray-600">
-          <strong>Fontes:</strong> GA4 Resumo, GA4 Completo e GA4 Source. Os dados são atualizados todos os dias às 6
-          horas da manhã.
+          <strong>Fontes:</strong> GA4 Resumo, GA4 Completo e GA4 Source (API Nacional). Os dados são atualizados automaticamente.
         </p>
         <p className="text-xs text-gray-500 mt-2">
           <strong>Filtro de Data:</strong> Os dados são filtrados automaticamente com base no período selecionado. Todos
           os gráficos e métricas refletem apenas os dados do período escolhido.
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          <strong>Novos CTAs:</strong> WhatsApp Flutuante, Contrate Agora e Fale com a Gente são as principais conversões monitoradas.
         </p>
       </div>
     </div>

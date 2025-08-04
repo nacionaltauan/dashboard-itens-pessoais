@@ -1021,3 +1021,117 @@ export const useMetaTratadoData = () => {
 
   return { data, loading, error, refetch: loadData }
 }
+
+
+// NOVAS FUNÇÕES PARA GA4 COM API NACIONAL
+export const fetchGA4SourceNacionalData = async () => {
+  try {
+    const response = await apiNacional.get(
+      "/google/sheets/11Er3KQ1uGFD7qFHFDDG9l4wIlcc2XYVSf0K6i8-jFRk/data?range=GA4%20-Source",
+    )
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados do GA4 Source Nacional:", error)
+    throw error
+  }
+}
+
+export const fetchGA4CompletoNacionalData = async () => {
+  try {
+    const response = await apiNacional.get(
+      "/google/sheets/11Er3KQ1uGFD7qFHFDDG9l4wIlcc2XYVSf0K6i8-jFRk/data?range=GA4%20-%20Completo",
+    )
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados do GA4 Completo Nacional:", error)
+    throw error
+  }
+}
+
+export const fetchGA4ResumoNacionalData = async () => {
+  try {
+    const response = await apiNacional.get(
+      "/google/sheets/11Er3KQ1uGFD7qFHFDDG9l4wIlcc2XYVSf0K6i8-jFRk/data?range=GA4%20-Resumo",
+    )
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados do GA4 Resumo Nacional:", error)
+    throw error
+  }
+}
+
+// NOVOS HOOKS PARA GA4 NACIONAL
+export const useGA4SourceNacionalData = () => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchGA4SourceNacionalData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+export const useGA4CompletoNacionalData = () => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchGA4CompletoNacionalData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+export const useGA4ResumoNacionalData = () => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchGA4ResumoNacionalData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
