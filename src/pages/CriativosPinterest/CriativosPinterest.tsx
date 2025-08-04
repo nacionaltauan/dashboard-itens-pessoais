@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
 import { Calendar, Filter, ArrowUpDown } from "lucide-react"
-import { useCartaoPinterestData, usePinterestImageData, usePontuacaoPinterestData } from "../../services/api"
+import { usePinterestNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 import CreativeModal from "./components/CreativeModal"
 
@@ -50,9 +50,7 @@ const getGoogleDriveEmbedLink = (url: string): string => {
 }
 
 const CriativosPinterest: React.FC = () => {
-  const { data: apiData, loading: pinterestLoading, error: pinterestError } = useCartaoPinterestData()
-  const { data: imageData, loading: imageLoading, error: imageError } = usePinterestImageData()
-  const { data: pontuacaoData, loading: pontuacaoLoading, error: pontuacaoError } = usePontuacaoPinterestData()
+  const { data: apiData, loading, error } = usePinterestNacionalData()
 
   const [processedData, setProcessedData] = useState<CreativeData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
@@ -82,57 +80,58 @@ const CriativosPinterest: React.FC = () => {
   }
 
   useEffect(() => {
-    if (apiData?.values && imageData?.values && pontuacaoData?.values) {
+    if (apiData?.values) {
       const mediaMap = new Map<string, string>()
-      const imageHeaders = imageData.values[0]
-      const adIdColIndex = imageHeaders.indexOf("Ad ID")
-      const urlColIndex = imageHeaders.indexOf("URL")
+      const pontuacaoMap = new Map<string, any>()
+      const tiposCompraSet = new Set<string>()
+      const videoEstaticoAudioSet = new Set<string>()
+
+      const headers = apiData.values[0]
+      const rows = apiData.values.slice(1)
+
+      const adIdColIndex = headers.indexOf("Ad ID")
+      const urlColIndex = headers.indexOf("URL")
+      const creativeTitleColIndex = headers.indexOf("Promoted pin name")
+      const pontuacaoColIndex = headers.indexOf("Pontuacao de criativo")
+      const tipoCompraColIndex = headers.indexOf("Tipo de Compra")
+      const videoEstaticoAudioColIndex = headers.indexOf("video_estatico_audio")
+
       if (adIdColIndex !== -1 && urlColIndex !== -1) {
-        const imageRows = imageData.values.slice(1)
-        imageRows.forEach((row: string[]) => {
+        rows.forEach((row: string[]) => {
           const adIdRaw = row[adIdColIndex]
           const url = row[urlColIndex]
           if (adIdRaw && url) {
             const adIdToMap = adIdRaw.split("_")[0].trim()
             mediaMap.set(adIdToMap, getGoogleDriveEmbedLink(url))
           }
+
+          const creativeTitle = row[creativeTitleColIndex]?.trim() || ""
+          const pontuacao = Number.parseFloat(row[pontuacaoColIndex]?.replace(",", ".") || "0")
+          const tipoCompra = row[tipoCompraColIndex]
+          const videoEstaticoAudio = row[videoEstaticoAudioColIndex]
+
+          if (creativeTitle) {
+            pontuacaoMap.set(creativeTitle, {
+              pontuacao,
+              tipoCompra,
+              videoEstaticoAudio,
+            })
+          }
+
+          if (tipoCompra) tiposCompraSet.add(tipoCompra)
+          if (videoEstaticoAudio) videoEstaticoAudioSet.add(videoEstaticoAudio)
         })
       }
-
-      const pontuacaoHeaders = pontuacaoData.values[0]
-      const pontuacaoRows = pontuacaoData.values.slice(1)
-      const pontuacaoMap = new Map<string, any>()
-      pontuacaoRows.forEach((row: string[]) => {
-        const creativeTitle = row[pontuacaoHeaders.indexOf("Creative title")]
-        if (creativeTitle) {
-          pontuacaoMap.set(creativeTitle.trim(), {
-            pontuacao: Number.parseFloat(
-              row[pontuacaoHeaders.indexOf("Pontuacao de criativo")]?.replace(",", ".") || "0",
-            ),
-            tipoCompra: row[pontuacaoHeaders.indexOf("Tipo de Compra")],
-            videoEstaticoAudio: row[pontuacaoHeaders.indexOf("video_estatico_audio")],
-          })
-        }
-      })
-
-      const headers = apiData.values[0]
-      const rows = apiData.values.slice(1)
-
-      const tiposCompraSet = new Set<string>()
-      const videoEstaticoAudioSet = new Set<string>()
 
       const processed: CreativeData[] = rows
         .map((row: string[]) => {
           const parseNumber = (value: string) => Number.parseFloat(value.replace(/[R$\s.]/g, "").replace(",", ".")) || 0
           const parseInteger = (value: string) => Number.parseInt(value.replace(/[.\s]/g, "").replace(",", "")) || 0
 
-          const promotedPinName = row[headers.indexOf("Promoted pin name")]?.trim() || ""
+          const promotedPinName = row[creativeTitleColIndex]?.trim() || ""
           const scoreData = pontuacaoMap.get(promotedPinName)
 
-          if (scoreData?.tipoCompra) tiposCompraSet.add(scoreData.tipoCompra)
-          if (scoreData?.videoEstaticoAudio) videoEstaticoAudioSet.add(scoreData.videoEstaticoAudio)
-
-          const adId = row[headers.indexOf("Ad ID")]?.trim() || ""
+          const adId = row[adIdColIndex]?.trim() || ""
 
           return {
             date: row[headers.indexOf("Date")] || "",
@@ -187,7 +186,7 @@ const CriativosPinterest: React.FC = () => {
       })
       setAvailableCampaigns(Array.from(campaignSet).filter(Boolean))
     }
-  }, [apiData, imageData, pontuacaoData])
+  }, [apiData])
 
   const filteredData = useMemo(() => {
     let filtered = processedData
@@ -285,16 +284,14 @@ const CriativosPinterest: React.FC = () => {
   const truncateText = (text: string, maxLength: number): string =>
     text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
 
-  if (pinterestLoading || imageLoading || pontuacaoLoading) {
+  if (loading) {
     return <Loading message="Carregando criativos Pinterest..." />
   }
 
-  if (pinterestError || imageError || pontuacaoError) {
+  if (error) {
     return (
       <div className="bg-red-50/90 backdrop-blur-sm border border-red-200 rounded-lg p-4">
-        <p className="text-red-600">
-          Erro ao carregar dados: {pinterestError?.message || imageError?.message || pontuacaoError?.message}
-        </p>
+        <p className="text-red-600">Erro ao carregar dados: {error?.message}</p>
       </div>
     )
   }

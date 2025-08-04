@@ -3,19 +3,8 @@
 import type React from "react"
 import { useState, useEffect, useMemo, useRef } from "react"
 import { ResponsiveLine } from "@nivo/line"
-import {
-  Calendar,
-  Filter,
-  TrendingUp,
-  Play,
-  Info,
-  DollarSign,
-  MousePointer,
-  Eye,
-  BarChart3,
-  MapPin,
-} from "lucide-react"
-import { useConsolidadoData } from "../../services/api"
+import { Calendar, Filter, TrendingUp, Play, Info, DollarSign, MousePointer, Eye, BarChart3 } from "lucide-react"
+import { useConsolidadoNacionalData } from "../../services/api"
 import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
 import AnaliseSemanal from "./components/AnaliseSemanal"
 import Loading from "../../components/Loading/Loading"
@@ -57,7 +46,7 @@ interface VehicleEntry {
 
 const LinhaTempo: React.FC = () => {
   const contentRef = useRef<HTMLDivElement>(null)
-  const { data: apiData, loading, error } = useConsolidadoData()
+  const { data: apiData, loading, error } = useConsolidadoNacionalData()
   const [processedData, setProcessedData] = useState<DataPoint[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([])
@@ -67,8 +56,8 @@ const LinhaTempo: React.FC = () => {
   const [selectedMetric, setSelectedMetric] = useState<
     "impressions" | "clicks" | "totalSpent" | "videoViews" | "cpm" | "cpc" | "ctr" | "vtr"
   >("impressions")
-  const [selectedPracas, setSelectedPracas] = useState<string[]>([]) // Novo estado para o filtro de praças
   const [availablePracas, setAvailablePracas] = useState<string[]>([])
+  const [selectedPracas, setSelectedPracas] = useState<string[]>([])
 
   // Cores para diferentes plataformas/veículos
   const platformColors: Record<string, string> = {
@@ -97,88 +86,86 @@ const LinhaTempo: React.FC = () => {
 
   // Processar dados da API
   useEffect(() => {
-    if (apiData?.values) {
-      const headers = apiData.values[0]
-      const rows = apiData.values.slice(1)
+    if (apiData && apiData.data && Array.isArray(apiData.data.values) && apiData.data.values.length > 1) {
+      const [header, ...rows] = apiData.data.values
 
-      const processed: DataPoint[] = rows
-        .map((row: any[]) => {
-          const parseNumber = (value: string | number) => {
-            if (!value) return 0
-            const stringValue = value.toString()
-            const cleanValue = stringValue
-              .replace(/R\$\s*/g, "")
-              .replace(/\./g, "")
-              .replace(",", ".")
-              .trim()
-            const parsed = Number.parseFloat(cleanValue)
-            return isNaN(parsed) ? 0 : parsed
-          }
-
-          const parseInteger = (value: string | number) => {
-            if (!value) return 0
-            const stringValue = value.toString()
-            const cleanValue = stringValue.replace(/\./g, "").trim()
-            const parsed = Number.parseInt(cleanValue)
-            return isNaN(parsed) ? 0 : parsed
-          }
-
-          const parseDate = (dateStr: string) => {
-            if (!dateStr) return ""
-            const parts = dateStr.split("/")
-            if (parts.length !== 3) return ""
-            const [day, month, year] = parts
-            return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
-          }
-
-          const date = row[headers.indexOf("Date")]
-          const campaignName = row[headers.indexOf("Campaign name")]
-          const destinationURL = row[headers.indexOf("Destination URL ou Grupo de Anúncios ou Anúncio")]
-          const country = row[headers.indexOf("País e variações para regular a base")]
-          const impressions = row[headers.indexOf("Impressions")]
-          const reach = row[headers.indexOf("Reach")]
-          const linkClicks = row[headers.indexOf("Link clicks")]
-          const cost = row[headers.indexOf("Cost")]
-          const videoViews100 = row[headers.indexOf("Visualizações de vídeo a 100%")]
-          const videoViews50 = row[headers.indexOf("Visualizações de vídeo a 50%")]
-          const videoViews75 = row[headers.indexOf("Visualizações de vídeo a 75%")]
-          const videoViews25 = row[headers.indexOf("Visualizações de vídeo a 25%")]
-          const tipoCompra = row[headers.indexOf("Tipo de Compra")]
-          const tipoFormato = row[headers.indexOf("Tipo de formato")]
-          const plataforma = row[headers.indexOf("Plataforma")]
-          const cpm = row[headers.indexOf("CPM")]
-          const frequencia = row[headers.indexOf("Frequência")]
-          const cpmAlcance = row[headers.indexOf("CPM Alcance")]
-          const cpv = row[headers.indexOf("CPV")]
-          const cpvc = row[headers.indexOf("CPVc")]
-          const vtr100 = row[headers.indexOf("VTR 100%")]
-          const ctr = row[headers.indexOf("CTR")]
-          const praca = row[headers.indexOf("Praça")]
-
-          const dataPoint: DataPoint = {
-            date: date || "",
-            campaignName: campaignName || "",
-            creativeTitle: destinationURL || "", // Usando Destination URL para o título criativo
-            platform: plataforma || "Outros",
-            reach: parseInteger(reach),
-            impressions: parseInteger(impressions),
-            clicks: parseInteger(linkClicks),
-            totalSpent: parseNumber(cost),
-            videoViews: parseInteger(videoViews100), // Usando visualizações de vídeo a 100%
-            videoViews25: parseInteger(videoViews25),
-            videoViews50: parseInteger(videoViews50),
-            videoViews75: parseInteger(videoViews75),
-            videoCompletions: parseInteger(videoViews100), // Usando visualizações de vídeo a 100%
-            videoStarts: 0, // Não disponível nos dados
-            totalEngagements: 0, // Não disponível nos dados
-            veiculo: plataforma || "Outros",
-            tipoCompra: tipoCompra || "",
-            praca: praca || "N/A",
-          }
-
-          return dataPoint
+      const dataAsObjects = rows.map((row: any[]) => {
+        const obj: { [key: string]: any } = {}
+        header.forEach((key: string, index: number) => {
+          obj[key] = row[index]
         })
-        .filter(Boolean) as DataPoint[]
+        return obj
+      })
+
+      const processed: DataPoint[] = dataAsObjects.map((item: any) => {
+        const parseNumber = (value: string | number) => {
+          if (!value) return 0
+          const stringValue = value.toString()
+          const cleanValue = stringValue
+            .replace(/R\$\s*/g, "")
+            .replace(/\./g, "")
+            .replace(",", ".")
+            .trim()
+          const parsed = Number.parseFloat(cleanValue)
+          return isNaN(parsed) ? 0 : parsed
+        }
+
+        const parseInteger = (value: string | number) => {
+          if (!value) return 0
+          const stringValue = value.toString()
+          const cleanValue = stringValue.replace(/\./g, "").trim()
+          const parsed = Number.parseInt(cleanValue)
+          return isNaN(parsed) ? 0 : parsed
+        }
+
+        const parseDate = (dateStr: string) => {
+          if (!dateStr) return ""
+          const parts = dateStr.split("/")
+          if (parts.length !== 3) return ""
+          const [day, month, year] = parts
+          return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
+        }
+
+        const date = item["Date"]
+        const campaignName = item["Campaign name"]
+        const creativeTitle = item["Creative title"]
+        const platform = item["Veículo"]
+        const reach = item["Reach"]
+        const impressions = item["Impressions"]
+        const clicks = item["Clicks"]
+        const totalSpent = item["Total spent"]
+        const videoViews = item["Video views "] // Note the trailing space
+        const videoViews25 = item["Video views at 25%"]
+        const videoViews50 = item["Video views at 50%"]
+        const videoViews75 = item["Video views at 75%"]
+        const videoCompletions = item["Video completions "] // Note the trailing space
+        const tipoCompra = item["Tipo de Compra"]
+        const veiculo = item["Veículo"]
+        const praca = "N/A"
+
+        const dataPoint: DataPoint = {
+          date: parseDate(date) || "",
+          campaignName: campaignName || "",
+          creativeTitle: creativeTitle || "",
+          platform: platform || "Outros",
+          reach: parseInteger(reach),
+          impressions: parseInteger(impressions),
+          clicks: parseInteger(clicks),
+          totalSpent: parseNumber(totalSpent),
+          videoViews: parseInteger(videoViews),
+          videoViews25: parseInteger(videoViews25),
+          videoViews50: parseInteger(videoViews50),
+          videoViews75: parseInteger(videoViews75),
+          videoCompletions: parseInteger(videoCompletions),
+          videoStarts: parseInteger(item["Video starts"]) || 0,
+          totalEngagements: parseInteger(item["Total engagements"]) || 0,
+          veiculo: veiculo || "Outros",
+          tipoCompra: tipoCompra || "",
+          praca: praca,
+        }
+
+        return dataPoint
+      })
 
       processed.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
@@ -206,16 +193,6 @@ const LinhaTempo: React.FC = () => {
       const vehicles = Array.from(vehicleSet).filter(Boolean)
       setAvailableVehicles(vehicles)
       setSelectedVehicles([])
-
-      const pracaSet = new Set<string>()
-      processed.forEach((item) => {
-        if (item.praca && item.praca.trim() !== "") {
-          pracaSet.add(item.praca)
-        }
-      })
-      const pracas = Array.from(pracaSet).filter(Boolean)
-      setAvailablePracas(pracas)
-      setSelectedPracas([])
     }
   }, [apiData])
 
@@ -237,15 +214,11 @@ const LinhaTempo: React.FC = () => {
         filtered = filtered.filter((item) => selectedVehicles.includes(item.platform))
       }
 
-      if (selectedPracas.length > 0) {
-        filtered = filtered.filter((item) => selectedPracas.includes(item.praca))
-      }
-
       setFilteredData(filtered)
     } else {
       setFilteredData([])
     }
-  }, [processedData, dateRange, selectedVehicles, selectedPracas])
+  }, [processedData, dateRange, selectedVehicles])
 
   // Função para obter o valor da métrica de um item de dado
   const getMetricValue = (item: DataPoint, metric: typeof selectedMetric): number => {
@@ -433,16 +406,6 @@ const LinhaTempo: React.FC = () => {
     })
   }
 
-  const togglePraca = (praca: string) => {
-    setSelectedPracas((prev) => {
-      if (prev.includes(praca)) {
-        return prev.filter((p) => p !== praca)
-      } else {
-        return [...prev, praca]
-      }
-    })
-  }
-
   useEffect(() => {
     if (processedData.length > 0) {
       const pracaSet = new Set<string>()
@@ -584,28 +547,6 @@ const LinhaTempo: React.FC = () => {
                 >
                   <Icon className="w-3 h-3 inline-block mr-1" />
                   {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* Filtro de Praças */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-              <MapPin className="w-4 h-4 mr-2" />
-              Praças
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {availablePracas.map((praca) => (
-                <button
-                  key={praca}
-                  onClick={() => togglePraca(praca)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
-                    selectedPracas.includes(praca)
-                      ? "bg-blue-100 text-blue-800 border border-blue-300"
-                      : "bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200"
-                  }`}
-                >
-                  {praca}
                 </button>
               ))}
             </div>

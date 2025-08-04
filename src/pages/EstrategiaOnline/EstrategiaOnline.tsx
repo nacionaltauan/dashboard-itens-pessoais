@@ -2,20 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
-import {
-  Globe,
-  BarChart3,
-  Tv,
-  Radio,
-  Smartphone,
-  Monitor,
-  Volume2,
-  Eye,
-  Play,
-  MousePointer,
-  Users,
-  Calendar,
-} from "lucide-react"
+import { Globe, BarChart3, Tv, Smartphone, Monitor, Eye, Play, MousePointer, Users, Calendar } from "lucide-react"
 import { useEstrategiaOnlineData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 
@@ -73,7 +60,7 @@ const EstrategiaOnline: React.FC = () => {
       UOL: <Eye className="w-5 h-5" />,
       META: <Smartphone className="w-5 h-5" />,
       TIKTOK: <Play className="w-5 h-5" />,
-      PINTEREST: <Eye className="w-5 h-5" />
+      PINTEREST: <Eye className="w-5 h-5" />,
     }
     return iconMap[platform.toUpperCase()] || <Globe className="w-5 h-5" />
   }
@@ -88,7 +75,7 @@ const EstrategiaOnline: React.FC = () => {
       UOL: "#00a86b",
       META: "#0668E1",
       TIKTOK: "#ff0050",
-      PINTEREST: "#E60023"
+      PINTEREST: "#E60023",
     }
     return colorMap[platform.toUpperCase()] || "#6366f1"
   }
@@ -199,7 +186,7 @@ const EstrategiaOnline: React.FC = () => {
 
     // Calcular pacing e shares
     const totalPrevisto = Object.values(aggregated).reduce((sum, v) => sum + v.custoPrevisto, 0)
-    
+
     Object.values(aggregated).forEach((vehicle) => {
       vehicle.pacing = vehicle.custoPrevisto > 0 ? (vehicle.custoInvestido / vehicle.custoPrevisto) * 100 : 0
       vehicle.shareInvestimentoTotal = totalPrevisto > 0 ? (vehicle.custoPrevisto / totalPrevisto) * 100 : 0
@@ -303,9 +290,7 @@ const EstrategiaOnline: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Pacing Geral</p>
-              <p className="text-xl font-bold text-gray-900">
-                {campaignSummary.pacingGeral.toFixed(1)}%
-              </p>
+              <p className="text-xl font-bold text-gray-900">{campaignSummary.pacingGeral.toFixed(1)}%</p>
             </div>
             <Users className="w-8 h-8 text-green-600" />
           </div>

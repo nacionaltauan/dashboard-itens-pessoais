@@ -3,8 +3,22 @@
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
 import { BarChart3, Calendar, Filter, MapPin } from "lucide-react"
-import { useConsolidadoData } from "../../services/api"
+import { useConsolidadoNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
+
+// Interface for the raw API data
+interface ApiDataItem {
+  date?: string
+  platform?: string
+  campaignName?: string
+  impressions?: number
+  cost?: number
+  reach?: number
+  clicks?: number
+  frequency?: number
+  cpm?: number
+  praca?: string
+}
 
 interface ProcessedData {
   date: string
@@ -37,7 +51,7 @@ interface ChartDataPoint {
 }
 
 const VisaoGeral: React.FC = () => {
-  const { data: apiData, loading, error } = useConsolidadoData()
+  const { data: apiData, loading, error } = useConsolidadoNacionalData()
   const [processedData, setProcessedData] = useState<ProcessedData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
@@ -109,45 +123,42 @@ const VisaoGeral: React.FC = () => {
 
   // Processar dados da API
   useEffect(() => {
-    if (apiData?.values) {
-      const headers = apiData.values[0]
-      const rows = apiData.values.slice(1)
+    if (apiData?.data?.values) {
+      const headers = apiData.data.values[0]
+      const rows = apiData.data.values.slice(1)
 
       const processed: ProcessedData[] = rows
-        .map((row: string[]) => {
-          const parseNumber = (value: string | undefined) => {
-            if (!value) return 0
-            return Number.parseFloat(value.replace(/[R$\s.]/g, "").replace(",", ".")) || 0
+        .map((row: any[]) => {
+          const parseNumber = (value: string | undefined): number => {
+            if (!value || value === "") return 0
+            // Remove R$, pontos e vírgulas, converte para número
+            const cleanValue = value
+              .toString()
+              .replace(/R\$\s?/, "")
+              .replace(/\./g, "")
+              .replace(",", ".")
+            return Number.parseFloat(cleanValue) || 0
           }
 
-          const parseInteger = (value: string | undefined) => {
-            if (!value) return 0
-            return Number.parseInt(value.replace(/[.\s]/g, "")) || 0
+          const parseInteger = (value: string | undefined): number => {
+            if (!value || value === "") return 0
+            // Remove pontos de milhares
+            const cleanValue = value.toString().replace(/\./g, "")
+            return Number.parseInt(cleanValue) || 0
           }
-
-          const dateIndex = headers.indexOf("Date")
-          const platformIndex = headers.indexOf("Plataforma")
-          const campaignNameIndex = headers.indexOf("Campaign name")
-          const impressionsIndex = headers.indexOf("Impressions")
-          const costIndex = headers.indexOf("Cost")
-          const reachIndex = headers.indexOf("Reach")
-          const clicksIndex = headers.indexOf("Link clicks")
-          const frequencyIndex = headers.indexOf("Frequência")
-          const cpmIndex = headers.indexOf("CPM")
-          const pracaIndex = headers.indexOf("Praça")
 
           return {
-            date: validateAndReturnDate(row[dateIndex]),
-            platform: row[platformIndex] || "Outros",
-            campaignName: row[campaignNameIndex] || "",
-            impressions: parseInteger(row[impressionsIndex]),
-            cost: parseNumber(row[costIndex]),
-            reach: parseInteger(row[reachIndex]),
-            clicks: parseInteger(row[clicksIndex]),
-            frequency: parseNumber(row[frequencyIndex]) || 1,
-            cpm: parseNumber(row[cpmIndex]),
-            praca: row[pracaIndex] || "N/A",
-          } as ProcessedData
+            date: row[headers.indexOf("Date")] || "",
+            platform: row[headers.indexOf("Veículo")] || "Outros",
+            campaignName: row[headers.indexOf("Campaign name")] || "",
+            impressions: parseInteger(row[headers.indexOf("Impressions")]),
+            cost: parseNumber(row[headers.indexOf("Total spent")]),
+            reach: parseInteger(row[headers.indexOf("Reach")]),
+            clicks: parseInteger(row[headers.indexOf("Clicks")]),
+            frequency: 1, // Será calculado depois
+            cpm: 0, // Será calculado depois
+            praca: "Nacional", // Valor padrão para dados nacionais
+          }
         })
         .filter((item: ProcessedData) => item.date && item.impressions > 0)
 
@@ -156,7 +167,15 @@ const VisaoGeral: React.FC = () => {
       // Definir range de datas inicial
       if (processed.length > 0) {
         const validDates = processed
-          .map((item) => item.date)
+          .map((item) => {
+            // Converter data de DD/MM/YYYY para YYYY-MM-DD
+            const dateParts = item.date.split("/")
+            if (dateParts.length === 3) {
+              const [day, month, year] = dateParts
+              return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
+            }
+            return item.date
+          })
           .filter(Boolean)
           .sort()
 
@@ -176,12 +195,17 @@ const VisaoGeral: React.FC = () => {
 
     return processedData
       .filter((item) => {
-        const itemDateISO = item.date
-        if (!itemDateISO) return false
+        if (!item.date) return false
 
-        const itemDate = new Date(itemDateISO)
+        // Converter data de DD/MM/YYYY para Date object
+        const dateParts = item.date.split("/")
+        if (dateParts.length !== 3) return false
+
+        const [day, month, year] = dateParts
+        const itemDate = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
         const startDate = new Date(dateRange.start)
         const endDate = new Date(dateRange.end)
+
         return itemDate >= startDate && itemDate <= endDate
       })
       .filter((item) => selectedPlatforms.length === 0 || selectedPlatforms.includes(item.platform))

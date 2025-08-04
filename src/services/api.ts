@@ -64,7 +64,9 @@ export const fetchResumoData = async () => {
 // NOVA FUNÇÃO para buscar dados da API Nacional - Estratégia Online
 export const fetchEstrategiaOnlineData = async () => {
   try {
-    const response = await apiNacional.get("/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Resumo")
+    const response = await apiNacional.get(
+      "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Resumo",
+    )
     return response.data
   } catch (error) {
     console.error("Erro ao buscar dados da Estratégia Online:", error)
@@ -852,6 +854,119 @@ export const useBenchmarkData = () => {
     try {
       setLoading(true)
       const result = await fetchBenchmarkData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+// NOVAS FUNÇÕES PARA API NACIONAL
+export const fetchConsolidadoNacionalData = async () => {
+  try {
+    const response = await apiNacional.get(
+      "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Consolidado",
+    )
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados consolidados nacionais:", error)
+    throw error
+  }
+}
+
+export const fetchTikTokNacionalData = async () => {
+  try {
+    const response = await apiNacional.get(
+      "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=TikTok",
+    )
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados TikTok nacionais:", error)
+    throw error
+  }
+}
+
+export const fetchPinterestNacionalData = async () => {
+  try {
+    const response = await apiNacional.get(
+      "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Pinterest",
+    )
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados Pinterest nacionais:", error)
+    throw error
+  }
+}
+
+// NOVOS HOOKS PARA API NACIONAL
+export const useConsolidadoNacionalData = () => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchConsolidadoNacionalData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+export const useTikTokNacionalData = () => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchTikTokNacionalData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+export const usePinterestNacionalData = () => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchPinterestNacionalData()
       setData(result)
       setError(null)
     } catch (err) {

@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
 import { Calendar, Filter } from "lucide-react"
-import { useCCBBTikTokData } from "../../services/api"
+import { useTikTokNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 
 interface CreativeData {
@@ -32,6 +32,7 @@ interface CreativeData {
   paidComments: number
   paidShares: number
   paidFollows: number
+  praca: string
 }
 
 // Mapeamento de praças para nomes completos
@@ -43,14 +44,8 @@ const pracaMapping: Record<string, string> = {
   SSA: "Salvador",
 }
 
-// Função para extrair praça do nome da campanha
-const extractPracaFromCampaign = (campaignName: string): string => {
-  const match = campaignName.match(/VÍDEO\s*-\s*([A-Z]{2,3})(?:\s|$)/)
-  return match ? match[1] : ""
-}
-
 const CriativosTikTok: React.FC = () => {
-  const { data: apiData, loading, error } = useCCBBTikTokData()
+  const { data: apiData, loading, error } = useTikTokNacionalData()
   const [processedData, setProcessedData] = useState<CreativeData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [selectedPraca, setSelectedPraca] = useState<string>("")
@@ -77,11 +72,11 @@ const CriativosTikTok: React.FC = () => {
           }
 
           const date = row[headers.indexOf("Date")] || ""
-          const campaignName = row[headers.indexOf("Campaign name")] || ""
-          const adGroupName = row[headers.indexOf("Ad group name")] || ""
-          const adName = row[headers.indexOf("Ad name")] || ""
-          const adText = row[headers.indexOf("Ad text")] || ""
-          const videoThumbnailUrl = row[headers.indexOf("Video thumbnail URL")] || ""
+          const campaignName = row[headers.indexOf("Campaign Name")] || ""
+          const adGroupName = row[headers.indexOf("Ad Group Name")] || ""
+          const adName = row[headers.indexOf("Ad Name")] || ""
+          const adText = row[headers.indexOf("Ad Text")] || ""
+          const videoThumbnailUrl = row[headers.indexOf("Video Thumbnail URL")] || ""
           const impressions = parseInteger(row[headers.indexOf("Impressions")])
           const clicks = parseInteger(row[headers.indexOf("Clicks")])
           const cost = parseNumber(row[headers.indexOf("Cost")])
@@ -90,17 +85,18 @@ const CriativosTikTok: React.FC = () => {
           const reach = parseInteger(row[headers.indexOf("Reach")])
           const frequency = parseNumber(row[headers.indexOf("Frequency")])
           const results = parseInteger(row[headers.indexOf("Results")])
-          const videoViews = parseInteger(row[headers.indexOf("Video views")])
-          const twoSecondVideoViews = parseInteger(row[headers.indexOf("2-second video views")])
-          const videoViews25 = parseInteger(row[headers.indexOf("Video views at 25%")])
-          const videoViews50 = parseInteger(row[headers.indexOf("Video views at 50%")])
-          const videoViews75 = parseInteger(row[headers.indexOf("Video views at 75%")])
-          const videoViews100 = parseInteger(row[headers.indexOf("Video views at 100%")])
-          const profileVisits = parseInteger(row[headers.indexOf("Profile visits")])
-          const paidLikes = parseInteger(row[headers.indexOf("Paid likes")])
-          const paidComments = parseInteger(row[headers.indexOf("Paid comments")])
-          const paidShares = parseInteger(row[headers.indexOf("Paid shares")])
-          const paidFollows = parseInteger(row[headers.indexOf("Paid follows")])
+          const videoViews = parseInteger(row[headers.indexOf("Video Views")])
+          const twoSecondVideoViews = parseInteger(row[headers.indexOf("2-Second Video Views")])
+          const videoViews25 = parseInteger(row[headers.indexOf("Video Views at 25%")])
+          const videoViews50 = parseInteger(row[headers.indexOf("Video Views at 50%")])
+          const videoViews75 = parseInteger(row[headers.indexOf("Video Views at 75%")])
+          const videoViews100 = parseInteger(row[headers.indexOf("Video Views at 100%")])
+          const profileVisits = parseInteger(row[headers.indexOf("Profile Visits")])
+          const paidLikes = parseInteger(row[headers.indexOf("Paid Likes")])
+          const paidComments = parseInteger(row[headers.indexOf("Paid Comments")])
+          const paidShares = parseInteger(row[headers.indexOf("Paid Shares")])
+          const paidFollows = parseInteger(row[headers.indexOf("Paid Follows")])
+          const praca = row[headers.indexOf("City")] || ""
 
           return {
             date,
@@ -128,6 +124,7 @@ const CriativosTikTok: React.FC = () => {
             paidComments,
             paidShares,
             paidFollows,
+            praca,
           } as CreativeData
         })
         .filter((item: CreativeData) => item.date && item.impressions > 0)
@@ -145,9 +142,8 @@ const CriativosTikTok: React.FC = () => {
       // Extrair praças únicas
       const pracaSet = new Set<string>()
       processed.forEach((item) => {
-        const praca = extractPracaFromCampaign(item.campaignName)
-        if (praca) {
-          pracaSet.add(praca)
+        if (item.praca) {
+          pracaSet.add(item.praca)
         }
       })
       const pracas = Array.from(pracaSet).filter(Boolean).sort()
@@ -171,10 +167,7 @@ const CriativosTikTok: React.FC = () => {
 
     // Filtro por praça
     if (selectedPraca) {
-      filtered = filtered.filter((item) => {
-        const praca = extractPracaFromCampaign(item.campaignName)
-        return praca === selectedPraca
-      })
+      filtered = filtered.filter((item) => item.praca === selectedPraca)
     }
 
     // Agrupar por criativo APÓS a filtragem

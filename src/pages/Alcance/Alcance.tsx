@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
-import { Users, Calendar, Filter, Info, MapPin } from "lucide-react"
-import { useConsolidadoData } from "../../services/api"
+import { Users, Calendar, Filter, Info } from "lucide-react"
+import { useConsolidadoNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 
 interface ProcessedData {
@@ -20,7 +20,6 @@ interface ProcessedData {
   visualizacoes100: number
   cpv: number
   vtr100: number
-  praca: string // Adicionando praça diretamente nos dados processados
 }
 
 interface PlatformMetrics {
@@ -40,7 +39,7 @@ interface PlatformMetrics {
 }
 
 const Alcance: React.FC = () => {
-  const { data: apiData, loading, error } = useConsolidadoData()
+  const { data: apiData, loading, error } = useConsolidadoNacionalData()
   const [processedData, setProcessedData] = useState<ProcessedData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
@@ -73,56 +72,93 @@ const Alcance: React.FC = () => {
     Default: "#6366f1",
   }
 
-  // Processar dados da API
+  // Adicione também esta validação no início do componente para debug:
   useEffect(() => {
-    if (apiData?.values && apiData.values.length > 1) {
-      try {
-        const headers = apiData.values[0]
-        const rows = apiData.values.slice(1)
-
-        // Verificar se os headers necessários existem
-        const requiredHeaders = ["Date", "Plataforma", "Campaign name", "Impressions", "Cost", "Reach", "Link clicks", "Frequência", "CPM", "Visualizações de vídeo a 100%", "CPV", "VTR 100%", "Praça"]
-        const missingHeaders = requiredHeaders.filter(header => !headers.includes(header))
-        
-        if (missingHeaders.length > 0) {
-          console.warn("Headers ausentes:", missingHeaders)
+    console.log("API Data structure:", apiData)
+    if (apiData) {
+      console.log("API Data keys:", Object.keys(apiData))
+      if (apiData.data) {
+        console.log("API Data.data keys:", Object.keys(apiData.data))
+        if (apiData.data.values) {
+          console.log("API Data.data.values length:", apiData.data.values.length)
+          console.log("First few values:", apiData.data.values.slice(0, 3))
         }
+      }
+    }
+  }, [apiData])
 
-        const processed: ProcessedData[] = rows
-          .map((row: string[]) => {
-            const parseNumber = (value: string) => {
+  // Processar dados da API - VERSÃO CORRIGIDA
+  useEffect(() => {
+    if (apiData && apiData.data && Array.isArray(apiData.data.values) && apiData.data.values.length > 1) {
+      try {
+        const [header, ...rows] = apiData.data.values
+
+        const dataAsObjects = rows.map((row: any[]) => {
+          const obj: { [key: string]: any } = {}
+          header.forEach((key: string, index: number) => {
+            obj[key] = row[index]
+          })
+          return obj
+        })
+
+        const processed: ProcessedData[] = dataAsObjects
+          .map((item: any) => {
+            const parseNumber = (value: any) => {
               if (!value || value === "" || value === "0") return 0
-              return Number.parseFloat(value.replace(/[R$\s.]/g, "").replace(",", ".")) || 0
+              if (typeof value === "number") return value
+              const stringValue = value.toString()
+              const cleanValue = stringValue
+                .replace(/R\$\s*/g, "")
+                .replace(/\./g, "")
+                .replace(",", ".")
+                .trim()
+              const parsed = Number.parseFloat(cleanValue)
+              return isNaN(parsed) ? 0 : parsed
             }
 
-            const parseInteger = (value: string) => {
+            const parseInteger = (value: any) => {
               if (!value || value === "" || value === "0") return 0
-              return Number.parseInt(value.replace(/[.\s]/g, "").replace(",", "")) || 0
+              if (typeof value === "number") return value
+              const stringValue = value.toString()
+              const cleanValue = stringValue.replace(/\./g, "").trim()
+              const parsed = Number.parseInt(cleanValue)
+              return isNaN(parsed) ? 0 : parsed
             }
 
-            const getHeaderValue = (headerName: string) => {
-              const index = headers.indexOf(headerName)
-              return index !== -1 ? row[index] || "" : ""
+            const parseDate = (dateStr: string) => {
+              if (!dateStr) return ""
+              const parts = dateStr.split("/")
+              if (parts.length !== 3) return ""
+              const [day, month, year] = parts
+              return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
             }
 
+            // Mapear campos da API para a interface ProcessedData
             return {
-              date: getHeaderValue("Date"),
-              platform: getHeaderValue("Plataforma") || "Outros",
-              campaignName: getHeaderValue("Campaign name"),
-              impressions: parseInteger(getHeaderValue("Impressions")),
-              cost: parseNumber(getHeaderValue("Cost")),
-              reach: parseInteger(getHeaderValue("Reach")),
-              clicks: parseInteger(getHeaderValue("Link clicks")),
-              frequency: parseNumber(getHeaderValue("Frequência")) || 1,
-              cpm: parseNumber(getHeaderValue("CPM")),
-              linkClicks: parseInteger(getHeaderValue("Link clicks")),
-              visualizacoes100: parseInteger(getHeaderValue("Visualizações de vídeo a 100%")),
-              cpv: parseNumber(getHeaderValue("CPV")),
-              vtr100: parseNumber(getHeaderValue("VTR 100%")),
-              praca: getHeaderValue("Praça") || "Não informado", // Incluindo praça diretamente
+              date: parseDate(item["Date"]) || "",
+              platform: item["Veículo"] || "Outros", // Mudança aqui - usar "Veículo" em vez de "Plataforma"
+              campaignName: item["Campaign name"] || "",
+              impressions: parseInteger(item["Impressions"]),
+              cost: parseNumber(item["Total spent"]), // Mudança aqui - usar "Total spent" em vez de "Cost"
+              reach: parseInteger(item["Reach"]),
+              clicks: parseInteger(item["Clicks"]), // Mudança aqui - usar "Clicks" em vez de "Link clicks"
+              frequency: 0, // Será calculado depois: impressions / reach
+              cpm: 0, // Será calculado depois: cost / (impressions / 1000)
+              linkClicks: parseInteger(item["Clicks"]),
+              visualizacoes100: parseInteger(item["Video completions "]) || parseInteger(item["Video views "]), // Note o espaço no final
+              cpv: 0, // Será calculado depois
+              vtr100: 0, // Será calculado depois
             } as ProcessedData
           })
           .filter((item: ProcessedData) => item.date && item.impressions > 0)
+
+        // Calcular métricas derivadas
+        processed.forEach((item) => {
+          item.frequency = item.reach > 0 ? item.impressions / item.reach : 0
+          item.cpm = item.impressions > 0 ? (item.cost / item.impressions) * 1000 : 0
+          item.cpv = item.visualizacoes100 > 0 ? item.cost / item.visualizacoes100 : 0
+          item.vtr100 = item.impressions > 0 ? (item.visualizacoes100 / item.impressions) * 100 : 0
+        })
 
         setProcessedData(processed)
 
@@ -151,18 +187,6 @@ const Alcance: React.FC = () => {
         const platforms = Array.from(platformSet).filter(Boolean)
         setAvailablePlatforms(platforms)
         setSelectedPlatforms([])
-
-        // Extrair praças únicas
-        const pracaSet = new Set<string>()
-        processed.forEach((item) => {
-          if (item.praca) {
-            pracaSet.add(item.praca)
-          }
-        })
-        const pracas = Array.from(pracaSet).filter(Boolean)
-        setAvailablePracas(pracas)
-        setSelectedPracas([])
-
       } catch (error) {
         console.error("Erro ao processar dados:", error)
       }
@@ -196,13 +220,8 @@ const Alcance: React.FC = () => {
       filtered = filtered.filter((item) => selectedPlatforms.includes(item.platform))
     }
 
-    // Filtro por praça - Agora muito mais simples
-    if (selectedPracas.length > 0) {
-      filtered = filtered.filter((item) => selectedPracas.includes(item.praca))
-    }
-
     return filtered
-  }, [processedData, dateRange, selectedPlatforms, selectedPracas])
+  }, [processedData, dateRange, selectedPlatforms])
 
   // Calcular métricas por plataforma
   const platformMetrics = useMemo(() => {
@@ -300,16 +319,6 @@ const Alcance: React.FC = () => {
         return prev.filter((p) => p !== platform)
       }
       return [...prev, platform]
-    })
-  }
-
-  // Função para alternar seleção de praça
-  const togglePraca = (praca: string) => {
-    setSelectedPracas((prev) => {
-      if (prev.includes(praca)) {
-        return prev.filter((p) => p !== praca)
-      }
-      return [...prev, praca]
     })
   }
 
@@ -483,29 +492,6 @@ const Alcance: React.FC = () => {
                   }}
                 >
                   {platform}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Filtro de Praça */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-              <MapPin className="w-4 h-4 mr-2" />
-              Praça
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {availablePracas.map((praca) => (
-                <button
-                  key={praca}
-                  onClick={() => togglePraca(praca)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
-                    selectedPracas.includes(praca)
-                      ? "bg-green-100 text-green-800 border border-green-300"
-                      : "bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200"
-                  }`}
-                >
-                  {praca}
                 </button>
               ))}
             </div>

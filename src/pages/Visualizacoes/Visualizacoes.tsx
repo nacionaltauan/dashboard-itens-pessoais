@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
-import { Play, Calendar, Filter, ShoppingCart, MapPin, Info } from "lucide-react"
-import { useConsolidadoVideoData } from "../../services/api"
+import { Play, Calendar, Filter, MapPin, Info } from "lucide-react"
+import { useConsolidadoNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 
 interface ProcessedData {
@@ -56,7 +56,7 @@ interface PlatformMetrics {
 }
 
 const Visualizacoes: React.FC = () => {
-  const { data: apiData, loading, error } = useConsolidadoVideoData()
+  const { data: apiData, loading, error } = useConsolidadoNacionalData()
   const [processedData, setProcessedData] = useState<ProcessedData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
@@ -119,94 +119,114 @@ const Visualizacoes: React.FC = () => {
     return `${day}/${month}/${year}`
   }
 
-  // Processar dados da API
+  // Adicione também esta validação no início do componente para debug:
   useEffect(() => {
-    if (apiData?.values && apiData.values.length > 1) {
-      try {
-        const headers = apiData.values[0]
-        const rows = apiData.values.slice(1)
-
-        // Verificar se os headers necessários existem
-        const requiredHeaders = [
-          "Date",
-          "Plataforma",
-          "Campaign name",
-          "Impressions",
-          "Total spent",
-          "Reach",
-          "Clicks",
-          "Video views ",
-          "Video views at 25%",
-          "Video views at 50%",
-          "Video views at 75%",
-          "Video completions ",
-          "Tipo de Compra",
-        ]
-
-        const missingHeaders = requiredHeaders.filter((header) => !headers.includes(header))
-        if (missingHeaders.length > 0) {
-          console.warn("Headers ausentes:", missingHeaders)
+    console.log("API Data structure (Visualizações):", apiData)
+    if (apiData) {
+      console.log("API Data keys:", Object.keys(apiData))
+      if (apiData.data) {
+        console.log("API Data.data keys:", Object.keys(apiData.data))
+        if (apiData.data.values) {
+          console.log("API Data.data.values length:", apiData.data.values.length)
+          console.log("Header:", apiData.data.values[0])
+          console.log("First data row:", apiData.data.values[1])
         }
+      }
+    }
+  }, [apiData])
 
-        const processed: ProcessedData[] = rows
-          .map((row: string[]) => {
-            const parseNumber = (value: string) => {
+  // Processar dados da API - VERSÃO CORRIGIDA
+  useEffect(() => {
+    if (apiData && apiData.data && Array.isArray(apiData.data.values) && apiData.data.values.length > 1) {
+      try {
+        const [header, ...rows] = apiData.data.values
+
+        const dataAsObjects = rows.map((row: any[]) => {
+          const obj: { [key: string]: any } = {}
+          header.forEach((key: string, index: number) => {
+            obj[key] = row[index]
+          })
+          return obj
+        })
+
+        const processed: ProcessedData[] = dataAsObjects
+          .map((item: any) => {
+            const parseNumber = (value: any) => {
               if (!value || value === "" || value === "0") return 0
-              return Number.parseFloat(value.replace(/[R$\s.]/g, "").replace(",", ".")) || 0
+              if (typeof value === "number") return value
+              const stringValue = value.toString()
+              const cleanValue = stringValue
+                .replace(/R\$\s*/g, "")
+                .replace(/\./g, "")
+                .replace(",", ".")
+                .trim()
+              const parsed = Number.parseFloat(cleanValue)
+              return isNaN(parsed) ? 0 : parsed
             }
 
-            const parseInteger = (value: string) => {
+            const parseInteger = (value: any) => {
               if (!value || value === "" || value === "0") return 0
-              return Number.parseInt(value.replace(/[.\s]/g, "").replace(",", "")) || 0
+              if (typeof value === "number") return value
+              const stringValue = value.toString()
+              const cleanValue = stringValue.replace(/\./g, "").trim()
+              const parsed = Number.parseInt(cleanValue)
+              return isNaN(parsed) ? 0 : parsed
             }
 
-            const getHeaderValue = (headerName: string) => {
-              const index = headers.indexOf(headerName)
-              return index !== -1 ? row[index] || "" : ""
+            const parseDate = (dateStr: string) => {
+              if (!dateStr) return ""
+              const parts = dateStr.split("/")
+              if (parts.length !== 3) return ""
+              const [day, month, year] = parts
+              return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
             }
 
-            const impressions = parseInteger(getHeaderValue("Impressions"))
-            const videoViews = parseInteger(getHeaderValue("Video views "))
-            const videoCompletions = parseInteger(getHeaderValue("Video completions "))
-            const cost = parseNumber(getHeaderValue("Total spent"))
-            const platform = getHeaderValue("Plataforma")
-            const campaignName = getHeaderValue("Campaign name")
-
-            // Usar a coluna "Praça" diretamente ao invés de extrair do nome da campanha
-            const praca = getHeaderValue("Praça") || "Não Definida"
-
-            // Extrair tipo de compra
-            const tipoCompra = getHeaderValue("Tipo de Compra") || "CPM"
+            // Mapear campos da API para a interface ProcessedData
+            const impressions = parseInteger(item["Impressions"])
+            const videoViews = parseInteger(item["Video views "]) // Note o espaço no final
+            const videoCompletions = parseInteger(item["Video completions "]) // Note o espaço no final
+            const cost = parseNumber(item["Total spent"])
+            const platform = item["Veículo"] || "Outros"
+            const campaignName = item["Campaign name"] || ""
+            const reach = parseInteger(item["Reach"])
 
             // Converter data para formato ISO
-            const originalDate = getHeaderValue("Date")
-            const convertedDate = convertDateFormat(originalDate)
+            const originalDate = item["Date"]
+            const convertedDate = parseDate(originalDate)
+
+            // Extrair tipo de compra da API
+            const tipoCompra = item["Tipo de Compra"] || "CPM"
+
+            // Para praça, vamos extrair do nome da campanha se não houver coluna específica
+            let praca = "Nacional" // Default
+            if (campaignName.includes("| SP |")) praca = "São Paulo"
+            else if (campaignName.includes("| RJ |")) praca = "Rio de Janeiro"
+            else if (campaignName.includes("| MG |")) praca = "Minas Gerais"
+            else if (campaignName.includes("| RS |")) praca = "Rio Grande do Sul"
+            else if (campaignName.includes("| NAC |")) praca = "Nacional"
 
             return {
-              date: convertedDate, // Usar data convertida
-              platform: platform || "Outros",
+              date: convertedDate,
+              platform: platform,
               campaignName: campaignName,
               impressions: impressions,
               cost: cost,
-              reach: parseInteger(getHeaderValue("Reach")),
-              clicks: parseInteger(getHeaderValue("Clicks")),
-              frequency:
-                impressions > 0 && parseInteger(getHeaderValue("Reach")) > 0
-                  ? impressions / parseInteger(getHeaderValue("Reach"))
-                  : 1,
-              cpm: impressions > 0 ? cost / (impressions / 1000) : 0,
-              linkClicks: parseInteger(getHeaderValue("Clicks")),
+              reach: reach,
+              clicks: parseInteger(item["Clicks"]),
+              frequency: reach > 0 ? impressions / reach : 1,
+              cpm: impressions > 0 ? (cost / impressions) * 1000 : 0,
+              linkClicks: parseInteger(item["Clicks"]),
               videoViews: videoViews,
-              videoViews25: parseInteger(getHeaderValue("Video views at 25%")),
-              videoViews50: parseInteger(getHeaderValue("Video views at 50%")),
-              videoViews75: parseInteger(getHeaderValue("Video views at 75%")),
+              videoViews25: parseInteger(item["Video views at 25%"]),
+              videoViews50: parseInteger(item["Video views at 50%"]),
+              videoViews75: parseInteger(item["Video views at 75%"]),
               videoCompletions: videoCompletions,
               cpv: videoViews > 0 ? cost / videoViews : 0,
               cpvc: videoCompletions > 0 ? cost / videoCompletions : 0,
               vtr100: impressions > 0 && videoCompletions > 0 ? (videoCompletions / impressions) * 100 : 0,
               tipoCompra: tipoCompra,
-              praca: praca, // Usar praça direta da API
-              tipoFormato: "Vídeo", // Assumindo que todos são vídeo na nova API
+              praca: praca,
+              tipoFormato: item["video_estatico_audio"] === "Video" ? "Vídeo" : "Estático",
             } as ProcessedData
           })
           .filter((item: ProcessedData) => {
@@ -215,11 +235,13 @@ const Visualizacoes: React.FC = () => {
               item.date &&
               item.impressions > 0 &&
               (item.videoViews > 0 || item.videoCompletions > 0) && // Deve ter pelo menos uma métrica de vídeo
-              item.platform // Deve ter plataforma definida
+              item.platform &&
+              item.tipoFormato === "Vídeo" // Apenas vídeos para esta página
             )
           })
 
         console.log("Dados processados (vídeo):", processed.length)
+        console.log("Amostra dos dados:", processed.slice(0, 3))
         setProcessedData(processed)
 
         // Definir range de datas inicial
@@ -240,7 +262,7 @@ const Visualizacoes: React.FC = () => {
         // Extrair plataformas únicas (apenas as que têm video views)
         const platformSet = new Set<string>()
         processed.forEach((item) => {
-          if (item.platform && item.videoViews > 0) {
+          if (item.platform && (item.videoViews > 0 || item.videoCompletions > 0)) {
             platformSet.add(item.platform)
           }
         })
@@ -272,8 +294,12 @@ const Visualizacoes: React.FC = () => {
       } catch (error) {
         console.error("Erro ao processar dados:", error)
       }
+    } else {
+      console.log("Dados da API não disponíveis ou estrutura incorreta:", apiData)
     }
   }, [apiData])
+
+
 
   // Filtrar dados por data, plataforma, tipo de compra e praça
   const filteredData = useMemo(() => {
@@ -305,12 +331,14 @@ const Visualizacoes: React.FC = () => {
     }
 
     // Filtro por praça
+    /*
     if (selectedPracas.length > 0) {
       filtered = filtered.filter((item) => selectedPracas.includes(item.praca))
     }
+    */
 
     return filtered
-  }, [processedData, dateRange, selectedPlatforms, selectedTiposCompra, selectedPracas])
+  }, [processedData, dateRange, selectedPlatforms, selectedTiposCompra])
 
   // Calcular métricas por plataforma
   const platformMetrics = useMemo(() => {
@@ -767,28 +795,21 @@ const Visualizacoes: React.FC = () => {
           {/* Filtro de Tipo de Compra */}
           <div className="flex items-center gap-2">
             <label className="block text-sm font-medium text-gray-700 flex items-center">
-              <ShoppingCart className="w-4 h-4 mr-2" />
+              <Info className="w-4 h-4 mr-2" />
               Tipo de Compra:
             </label>
             <div className="flex flex-wrap gap-2">
-              {availableTiposCompra.map((tipoCompra) => (
+              {availableTiposCompra.map((tipo) => (
                 <button
-                  key={tipoCompra}
-                  onClick={() => toggleTipoCompra(tipoCompra)}
+                  key={tipo}
+                  onClick={() => toggleTipoCompra(tipo)}
                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
-                    selectedTiposCompra.includes(tipoCompra)
+                    selectedTiposCompra.includes(tipo)
                       ? "bg-blue-100 text-blue-800 border border-blue-300"
                       : "bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200"
                   }`}
-                  style={{
-                    backgroundColor: selectedTiposCompra.includes(tipoCompra)
-                      ? tipoCompraColors[tipoCompra] + "20"
-                      : undefined,
-                    borderColor: selectedTiposCompra.includes(tipoCompra) ? tipoCompraColors[tipoCompra] : undefined,
-                    color: selectedTiposCompra.includes(tipoCompra) ? tipoCompraColors[tipoCompra] : undefined,
-                  }}
                 >
-                  {tipoCompra}
+                  {tipo}
                 </button>
               ))}
             </div>
@@ -810,11 +831,6 @@ const Visualizacoes: React.FC = () => {
                       ? "bg-blue-100 text-blue-800 border border-blue-300"
                       : "bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200"
                   }`}
-                  style={{
-                    backgroundColor: selectedPracas.includes(praca) ? "#6c5ce720" : undefined,
-                    borderColor: selectedPracas.includes(praca) ? "#6c5ce7" : undefined,
-                    color: selectedPracas.includes(praca) ? "#6c5ce7" : undefined,
-                  }}
                 >
                   {praca}
                 </button>
@@ -824,128 +840,12 @@ const Visualizacoes: React.FC = () => {
         </div>
       </div>
 
-      {/* Métricas Principais */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="card-overlay rounded-lg shadow-lg p-4 text-center min-h-[100px] flex flex-col justify-center">
-          <div className="text-sm text-gray-600 mb-1">Investimento total</div>
-          <div className="text-2xl font-bold text-gray-900">R$ {formatNumber(totals.investment)}</div>
-        </div>
-
-        <div className="card-overlay rounded-lg shadow-lg p-4 text-center min-h-[100px] flex flex-col justify-center">
-          <div className="text-sm text-gray-600 mb-1">VTR 100%</div>
-          <div className="text-2xl font-bold text-gray-900">{totals.vtr100.toFixed(2)}%</div>
-        </div>
-
-        <div className="card-overlay rounded-lg shadow-lg p-4 text-center min-h-[100px] flex flex-col justify-center">
-          <div className="text-sm text-gray-600 mb-1">Vis. de vídeo 100%</div>
-          <div className="text-2xl font-bold text-gray-900">{formatNumber(totals.videoViews)}</div>
-        </div>
-
-        <div className="card-overlay rounded-lg shadow-lg p-4 text-center min-h-[100px] flex flex-col justify-center">
-          <div className="text-sm text-gray-600 mb-1">CPV Médio</div>
-          <div className="text-2xl font-bold text-gray-900">{formatCurrency(totals.cpv)}</div>
-        </div>
-
-        <div className="card-overlay rounded-lg shadow-lg p-4 text-center min-h-[100px] flex flex-col justify-center">
-          <div className="text-sm text-gray-600 mb-1">CPVc Médio</div>
-          <div className="text-2xl font-bold text-gray-900">{formatCurrency(totals.cpvc)}</div>
-        </div>
-      </div>
-
       {/* Gráficos */}
-      <div className="card-overlay rounded-lg shadow-lg p-6">
-        <RetentionCurveChart data={platformMetrics} />
-      </div>
-
-      {/* Tabela Detalhada */}
-      <div className="flex-1 card-overlay rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Dados Detalhados por Plataforma</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-blue-600 text-white">
-                <th className="text-left py-3 px-4 font-semibold">#</th>
-                <th className="text-left py-3 px-4 font-semibold">Plataforma</th>
-                <th className="text-left py-3 px-4 font-semibold">Tipo de Compra</th>
-                <th className="text-left py-3 px-4 font-semibold">Praça</th>
-                <th className="text-right py-3 px-4 font-semibold">Investimento</th>
-                <th className="text-right py-3 px-4 font-semibold">CPM</th>
-                <th className="text-right py-3 px-4 font-semibold">CPV</th>
-                <th className="text-right py-3 px-4 font-semibold">CPVc</th>
-                <th className="text-right py-3 px-4 font-semibold">VTR 100%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {platformMetrics.map((metric, index) => (
-                <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
-                  <td className="py-3 px-4 font-medium">{index + 1}.</td>
-                  <td className="py-3 px-4 font-medium">{metric.platform}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex flex-wrap gap-1">
-                      {metric.tiposCompra.map((tipo, tipoIndex) => (
-                        <span
-                          key={tipoIndex}
-                          className="px-2 py-1 rounded-full text-xs font-medium text-white"
-                          style={{ backgroundColor: tipoCompraColors[tipo] || tipoCompraColors.Default }}
-                        >
-                          {tipo}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex flex-wrap gap-1">
-                      {metric.pracas.map((praca, pracaIndex) => (
-                        <span
-                          key={pracaIndex}
-                          className="px-2 py-1 rounded-full text-xs font-medium text-white"
-                          style={{ backgroundColor: "#6c5ce7" }}
-                        >
-                          {praca}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right font-semibold">{formatCurrency(metric.cost)}</td>
-                  <td className="py-3 px-4 text-right">{formatCurrency(metric.cpm)}</td>
-                  <td className="py-3 px-4 text-right">{formatCurrency(metric.cpv)}</td>
-                  <td className="py-3 px-4 text-right">{formatCurrency(metric.cpvc)}</td>
-                  <td className="py-3 px-4 text-right">{metric.vtr100.toFixed(2)}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Observações */}
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <div className="text-sm text-gray-700">
-            <strong>CPV:</strong> Custo por visualização de vídeo
-            <br />
-            <strong>CPVc:</strong> Custo por visualização completa (100%)
-          </div>
-        </div>
-      </div>
-
-      {/* Alerta Informativo */}
-      <div className="bg-blue-50/90 backdrop-blur-sm border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <Info className="w-5 h-5 text-blue-600 mt-0.5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-blue-900 mb-1">Informações sobre Métricas de Vídeo</h3>
-            <p className="text-sm text-blue-700">
-              As métricas de <strong>visualizações</strong> e <strong>VTR</strong> são baseadas nos dados fornecidos
-              pelas plataformas. O <strong>CPV</strong> representa o custo por visualização e o <strong>CPVc</strong> o
-              custo por visualização completa (100%). Estes valores podem variar conforme as configurações de campanha e
-              as definições específicas de cada plataforma.
-            </p>
-          </div>
-        </div>
-      </div>
+      <RetentionCurveChart data={platformMetrics} />
+      
     </div>
   )
 }
 
 export default Visualizacoes
+

@@ -15,7 +15,6 @@ import {
   ArrowDown,
   Minus,
   Info,
-  MapPin,
 } from "lucide-react"
 import PDFDownloadButton from "../../../components/PDFDownloadButton/PDFDownloadButton"
 
@@ -95,12 +94,21 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
   const [selectedMetric, setSelectedMetric] = useState<
     "impressions" | "clicks" | "views" | "cpm" | "cpc" | "cpv" | "ctr" | "vtr"
   >("impressions")
-  const [selectedPracas, setSelectedPracas] = useState<string[]>([]) // Novo estado para o filtro de praças
   const [availablePracas, setAvailablePracas] = useState<string[]>([])
-
   // Função para criar datas locais sem problemas de timezone
   const createLocalDate = (dateStr: string) => {
     if (!dateStr) return new Date()
+
+    // Se a data está no formato DD/MM/YYYY, converter para YYYY-MM-DD
+    if (dateStr.includes("/")) {
+      const parts = dateStr.split("/")
+      if (parts.length === 3) {
+        const [day, month, year] = parts
+        return new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
+      }
+    }
+
+    // Se a data está no formato YYYY-MM-DD
     const parts = dateStr.split("-")
     if (parts.length !== 3) return new Date()
     const [year, month, day] = parts
@@ -137,7 +145,6 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
     })
     const pracas = Array.from(pracaSet).filter(Boolean)
     setAvailablePracas(pracas)
-    setSelectedPracas([])
   }, [processedData])
 
   // Função para obter dados baseado no período selecionado
@@ -151,7 +158,7 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
 
     // Com filtro de data selecionado
     const startDate = createLocalDate(dateRange.start) // ← MUDANÇA AQUI
-    const endDate = createLocalDate(dateRange.end) // ��� MUDANÇA AQUI
+    const endDate = createLocalDate(dateRange.end) //  MUDANÇA AQUI
 
     // Calcular período anterior com a mesma duração
     const periodDuration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
@@ -175,8 +182,7 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
       const itemDate = createLocalDate(item.date) // ← MUDANÇA AQUI
       const isInDateRange = itemDate >= targetStartDate && itemDate <= targetEndDate
       const isVehicleSelected = selectedVehicles.length === 0 || selectedVehicles.includes(item.platform)
-      const isPracaSelected = selectedPracas.length === 0 || selectedPracas.includes(item.praca)
-      return isInDateRange && isVehicleSelected && isPracaSelected
+      return isInDateRange && isVehicleSelected
     })
   }
 
@@ -232,7 +238,7 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
     }
 
     return { current, previous, comparison }
-  }, [processedData, selectedVehicles, dateRange, selectedPracas])
+  }, [processedData, selectedVehicles, dateRange])
 
   // Dados do gráfico semanal comparativo
   const weeklyChartData: ChartData[] = useMemo(() => {
@@ -243,7 +249,17 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
     const groupByDay = (data: DataPoint[]) => {
       const grouped: Record<string, DataPoint[]> = {}
       data.forEach((item) => {
-        const date = createLocalDate(item.date) // ← MUDANÇA AQUI
+        let date: Date
+
+        // Se a data está no formato DD/MM/YYYY
+        if (item.date.includes("/")) {
+          const [day, month, year] = item.date.split("/")
+          date = new Date(Number.parseInt(year), Number.parseInt(month) - 1, Number.parseInt(day))
+        } else {
+          // Se a data está no formato YYYY-MM-DD
+          date = createLocalDate(item.date)
+        }
+
         const dayKey = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
         if (!grouped[dayKey]) grouped[dayKey] = []
         grouped[dayKey].push(item)
@@ -341,7 +357,7 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
     }
 
     return result
-  }, [selectedMetric, processedData, selectedVehicles, dateRange, selectedPracas])
+  }, [selectedMetric, processedData, selectedVehicles, dateRange])
 
   // Função para formatar valor monetário
   const formatCurrency = (value: number): string => {
@@ -358,15 +374,6 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
         return prev.filter((v) => v !== vehicle)
       }
       return [...prev, vehicle]
-    })
-  }
-
-  const togglePraca = (praca: string) => {
-    setSelectedPracas((prev) => {
-      if (prev.includes(praca)) {
-        return prev.filter((p) => p !== praca)
-      }
-      return [...prev, praca]
     })
   }
 
@@ -527,28 +534,6 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
                   }}
                 >
                   {vehicle}
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* Filtro de Praças */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-              <MapPin className="w-4 h-4 mr-2" />
-              Praças
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {availablePracas.map((praca) => (
-                <button
-                  key={praca}
-                  onClick={() => togglePraca(praca)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
-                    selectedPracas.includes(praca)
-                      ? "bg-blue-100 text-blue-800 border border-blue-300"
-                      : "bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200"
-                  }`}
-                >
-                  {praca}
                 </button>
               ))}
             </div>

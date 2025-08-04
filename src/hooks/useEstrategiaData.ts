@@ -1,5 +1,7 @@
+"use client"
+
 import { useState, useEffect } from "react"
-import { ResumoResponse, VeiculoData, MonthlyData } from "../types/estrategiaOnline"
+import type { ResumoResponse, VeiculoData, MonthlyData } from "../types/estrategiaOnline"
 
 export function useEstrategiaData() {
   const [loading, setLoading] = useState(true)
@@ -15,25 +17,31 @@ export function useEstrategiaData() {
         )
         const data: ResumoResponse = await response.json()
 
-        if (!data.success) {
-          throw new Error("Failed to fetch data")
+        if (!data.success || !data.data?.values) {
+          throw new Error("Failed to fetch data or invalid data structure")
         }
 
         const [headers, ...rows] = data.data.values
 
         // Parse raw data into structured format
-        const veiculosData: VeiculoData[] = rows.map(row => ({
-          veiculo: row[0],
-          mes: row[1],
-          custoInvestido: parseFloat(row[2].replace("R$", "").replace(/\./g, "").replace(",", ".").trim()) || 0,
-          custoPrevisto: parseFloat(row[3].replace("R$", "").replace(/\./g, "").replace(",", ".").trim()) || 0,
-          tipoCompra: row[4],
-        }))
+        const veiculosData: VeiculoData[] = rows
+          .map((row) => ({
+            veiculo: row[0] || "",
+            mes: row[1] || "",
+            custoInvestido:
+              Number.parseFloat((row[2] || "R$ 0,00").replace("R$", "").replace(/\./g, "").replace(",", ".").trim()) ||
+              0,
+            custoPrevisto:
+              Number.parseFloat((row[3] || "R$ 0,00").replace("R$", "").replace(/\./g, "").replace(",", ".").trim()) ||
+              0,
+            tipoCompra: row[4] || "",
+          }))
+          .filter((item) => item.veiculo && item.mes)
 
         // Group by month
         const monthlyGrouped: { [key: string]: MonthlyData } = {}
-        
-        veiculosData.forEach(item => {
+
+        veiculosData.forEach((item) => {
           if (!monthlyGrouped[item.mes]) {
             monthlyGrouped[item.mes] = {
               mes: item.mes,
@@ -55,18 +63,17 @@ export function useEstrategiaData() {
         })
 
         // Calculate pacing for each month
-        Object.values(monthlyGrouped).forEach(month => {
+        Object.values(monthlyGrouped).forEach((month) => {
           month.pacing = month.totalPrevisto > 0 ? (month.totalInvestido / month.totalPrevisto) * 100 : 0
         })
 
         setMonthlyData(monthlyGrouped)
-        
+
         // Set the most recent month as selected
         const months = Object.keys(monthlyGrouped)
         if (months.length > 0) {
           setSelectedMonth(months[0])
         }
-
       } catch (err) {
         setError(err as Error)
       } finally {
