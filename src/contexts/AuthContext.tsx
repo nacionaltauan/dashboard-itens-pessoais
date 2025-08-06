@@ -49,7 +49,7 @@ const AUTHORIZED_EMAILS = [
 const AUTHORIZED_DOMAINS = [
   "naccom.com.br",
   "bb.com.br",
-  "nmbb.com.br",
+  "brasilseg.com.br",
   // Adicione aqui outros domínios corporativos que devem ter acesso
   // "minhaempresa.com",
   // "outraempresa.com.br",
