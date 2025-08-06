@@ -41,18 +41,12 @@ const AUTHORIZED_EMAILS = [
   "thailima@brasilseg.com.br"
 ]
 
-// Domínios autorizados (permite qualquer email desses domínios)
-// Funciona para:
-// - Google Workspace corporativo (G Suite)
-// - Contas Google pessoais criadas com email corporativo
-// - Qualquer conta Google que use esses domínios
+
 const AUTHORIZED_DOMAINS = [
   "naccom.com.br",
   "bb.com.br",
   "brasilseg.com.br",
-  // Adicione aqui outros domínios corporativos que devem ter acesso
-  // "minhaempresa.com",
-  // "outraempresa.com.br",
+
 ]
 
 // Função para verificar se o email está autorizado
