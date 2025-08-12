@@ -535,7 +535,8 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
                 <div>
                   <p className="text-xs font-medium text-green-600">Sessões Campanha</p>
                   <p className="text-lg font-bold text-green-900">
-                    {formatNumber(processedResumoData.receptivo.sessoesCampanha)}
+                    {formatNumber(processedSourceData.totalSessions)}
+                    
                   </p>
                 </div>
                 <Users className="w-6 h-6 text-green-600" />
@@ -582,7 +583,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-yellow-600">Sessões Totais</p>
-                  <p className="text-lg font-bold text-yellow-900">{formatNumber(processedSourceData.totalSessions)}</p>
+                  <p className="text-lg font-bold text-yellow-900">{formatNumber(processedResumoData.receptivo.sessoesCampanha)}</p>
                 </div>
                 <BarChart3 className="w-6 h-6 text-yellow-600" />
               </div>

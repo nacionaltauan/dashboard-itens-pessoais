@@ -217,11 +217,11 @@ const BrazilMap: React.FC<BrazilMapProps> = ({ regionData, getIntensityColor }) 
   const legendData = useMemo(
     () => [
       { label: "Sem dados", color: "#e5e7eb" },
-      { label: "Muito Baixo", color: "#6b7280" }, // Cinza
-      { label: "Baixo", color: "#10b981" }, // Verde
-      { label: "Médio", color: "#eab308" }, // Amarelo
-      { label: "Alto", color: "#f59e0b" }, // Laranja
-      { label: "Muito Alto", color: "#dc2626" }, // Vermelho forte
+      { label: "Muito Baixo", color: "#00B4D8" }, // Cinza
+      { label: "Baixo", color: "#0096C7" }, // Verde
+      { label: "Médio", color: "#0077B6" }, // Amarelo
+      { label: "Alto", color: "#023E8A" }, // Laranja
+      { label: "Muito Alto", color: "#03045E" }, // Vermelho forte
     ],
     [],
   )
