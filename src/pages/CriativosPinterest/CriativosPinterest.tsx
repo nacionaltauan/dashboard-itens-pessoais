@@ -5,7 +5,8 @@ import { useState, useEffect, useMemo } from "react"
 import { Calendar, Filter, ArrowUpDown } from "lucide-react"
 import { usePinterestNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
-import CreativeModal from "./components/CreativeModal"
+import { googleDriveApi } from "../../services/googleDriveApi"
+import MediaThumbnail from "../../components/MediaThumbnail/MediaThumbnail" // Importe o novo componente
 
 interface CreativeData {
   date: string
@@ -51,26 +52,33 @@ const CriativosPinterest: React.FC = () => {
   const [itemsPerPage] = useState(10)
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc")
 
-  const [selectedCreative, setSelectedCreative] = useState<CreativeData | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  // Mudança principal: usar novo tipo de dados para mídias
+  const [creativeMedias, setCreativeMedias] = useState<Map<string, { url: string, type: string }>>(new Map())
+  const [mediasLoading, setMediasLoading] = useState(false)
 
-  const openCreativeModal = (creative: CreativeData) => {
-    setSelectedCreative(creative)
-    setIsModalOpen(true)
-  }
+  useEffect(() => {
+    const loadMedias = async () => {
+      setMediasLoading(true)
+      try {
+        const mediaMap = await googleDriveApi.getPlatformImages("pinterest")
+        setCreativeMedias(mediaMap)
+      } catch (error) {
+        console.error("Error loading Pinterest medias:", error)
+      } finally {
+        setMediasLoading(false)
+      }
+    }
 
-  const closeCreativeModal = () => {
-    setSelectedCreative(null)
-    setIsModalOpen(false)
-  }
+    loadMedias()
+  }, [])
 
   useEffect(() => {
     console.log("API Data received:", apiData)
-    
+
     if (apiData?.data?.values && Array.isArray(apiData.data.values)) {
       const headers = apiData.data.values[0]
       const rows = apiData.data.values.slice(1)
-      
+
       console.log("Headers:", headers)
       console.log("Sample row:", rows[0])
 
@@ -78,12 +86,12 @@ const CriativosPinterest: React.FC = () => {
         .map((row: string[], index: number) => {
           try {
             const parseNumber = (value: string) => {
-              if (!value || value === '') return 0
+              if (!value || value === "") return 0
               return Number.parseFloat(value.replace(/[R$\s.]/g, "").replace(",", ".")) || 0
             }
-            
+
             const parseInteger = (value: string) => {
-              if (!value || value === '') return 0
+              if (!value || value === "") return 0
               return Number.parseInt(value.replace(/[.\s]/g, "").replace(",", "")) || 0
             }
 
@@ -122,16 +130,16 @@ const CriativosPinterest: React.FC = () => {
             return null
           }
         })
-        .filter((item: CreativeData | null): item is CreativeData => item !== null && !!item.date && item.impressions > 0)
+        .filter(
+          (item: CreativeData | null): item is CreativeData => item !== null && !!item.date && item.impressions > 0,
+        )
 
       console.log("Processed data:", processed)
       setProcessedData(processed)
 
       if (processed.length > 0) {
-        const dates = processed
-          .map((item) => new Date(item.date))
-          .sort((a, b) => a.getTime() - b.getTime())
-        
+        const dates = processed.map((item) => new Date(item.date)).sort((a, b) => a.getTime() - b.getTime())
+
         setDateRange({
           start: dates[0].toISOString().split("T")[0],
           end: dates[dates.length - 1].toISOString().split("T")[0],
@@ -160,14 +168,12 @@ const CriativosPinterest: React.FC = () => {
       filtered = filtered.filter((item) => item.campaignName.includes(selectedCampaign))
     }
 
-    // Agrupar por promoted pin name + campaign para evitar duplicatas
     const groupedData: Record<string, CreativeData> = {}
     filtered.forEach((item) => {
       const key = `${item.promotedPinName}_${item.campaignName}_${item.adId}`
       if (!groupedData[key]) {
         groupedData[key] = { ...item }
       } else {
-        // Somar métricas para itens agrupados
         groupedData[key].impressions += item.impressions
         groupedData[key].reach += item.reach
         groupedData[key].clicks += item.clicks
@@ -183,16 +189,14 @@ const CriativosPinterest: React.FC = () => {
       }
     })
 
-    // Recalcular métricas derivadas após agrupamento
     const finalData = Object.values(groupedData).map((item) => ({
       ...item,
-      cpm: item.impressions > 0 ? (item.cost / (item.impressions / 1000)) : 0,
-      cpc: item.clicks > 0 ? (item.cost / item.clicks) : 0,
-      ctr: item.impressions > 0 ? ((item.clicks / item.impressions) * 100) : 0,
-      frequency: item.reach > 0 ? (item.impressions / item.reach) : 0,
+      cpm: item.impressions > 0 ? item.cost / (item.impressions / 1000) : 0,
+      cpc: item.clicks > 0 ? item.cost / item.clicks : 0,
+      ctr: item.impressions > 0 ? (item.clicks / item.impressions) * 100 : 0,
+      frequency: item.reach > 0 ? item.impressions / item.reach : 0,
     }))
 
-    // Ordenar por investimento (cost) em ordem decrescente
     finalData.sort((a, b) => {
       if (sortOrder === "desc") {
         return b.cost - a.cost
@@ -242,7 +246,7 @@ const CriativosPinterest: React.FC = () => {
 
   const formatCurrency = (value: number): string =>
     value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-  
+
   const truncateText = (text: string, maxLength: number): string =>
     text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
 
@@ -258,13 +262,11 @@ const CriativosPinterest: React.FC = () => {
     )
   }
 
-  // Debug: mostrar informações sobre os dados
   console.log("Filtered data length:", filteredData.length)
   console.log("Processed data length:", processedData.length)
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-700 rounded-lg flex items-center justify-center">
@@ -284,10 +286,8 @@ const CriativosPinterest: React.FC = () => {
         </div>
       </div>
 
-      {/* Filtros */}
       <div className="card-overlay rounded-lg shadow-lg p-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Filtro de Data */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
               <Calendar className="w-4 h-4 mr-2" />
@@ -309,7 +309,6 @@ const CriativosPinterest: React.FC = () => {
             </div>
           </div>
 
-          {/* Filtro de Campanha */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
               <Filter className="w-4 h-4 mr-2" />
@@ -331,7 +330,6 @@ const CriativosPinterest: React.FC = () => {
         </div>
       </div>
 
-      {/* Métricas Principais */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
         <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
           <div className="text-sm text-gray-600 mb-1">Investimento</div>
@@ -374,14 +372,11 @@ const CriativosPinterest: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabela de Criativos */}
       <div className="flex-1 card-overlay rounded-lg shadow-lg p-6">
         {filteredData.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-500">Nenhum dado encontrado para os filtros selecionados.</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Total de registros processados: {processedData.length}
-            </p>
+            <p className="text-sm text-gray-400 mt-2">Total de registros processados: {processedData.length}</p>
           </div>
         ) : (
           <>
@@ -389,8 +384,9 @@ const CriativosPinterest: React.FC = () => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-red-600 text-white">
+                    <th className="text-left py-3 px-4 font-semibold w-[5rem]">Mídia</th>
                     <th className="text-left py-3 px-4 font-semibold">Pin</th>
-                    <th 
+                    <th
                       className="text-right py-3 px-4 font-semibold min-w-[7.5rem] cursor-pointer"
                       onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
                     >
@@ -408,48 +404,44 @@ const CriativosPinterest: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedData.map((creative, index) => (
-                    <tr 
-                      key={`${creative.adId}-${index}`} 
-                      className={index % 2 === 0 ? "bg-red-50" : "bg-white"}
-                    >
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm leading-tight whitespace-normal break-words">
-                            {creative.promotedPinName}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">{truncateText(creative.campaignName, 40)}</p>
-                          <p className="text-xs text-gray-400 mt-1">ID: {creative.adId}</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right font-semibold min-w-[7.5rem]">
-                        {formatCurrency(creative.cost)}
-                      </td>
-                      <td className="py-3 px-4 text-right min-w-[7.5rem]">
-                        {formatNumber(creative.impressions)}
-                      </td>
-                      <td className="py-3 px-4 text-right min-w-[7.5rem]">
-                        {formatNumber(creative.clicks)}
-                      </td>
-                      <td className="py-3 px-4 text-right min-w-[7.5rem]">
-                        {creative.ctr.toFixed(2)}%
-                      </td>
-                      <td className="py-3 px-4 text-right min-w-[7.5rem]">
-                        {formatCurrency(creative.cpm)}
-                      </td>
-                      <td className="py-3 px-4 text-right min-w-[7.5rem]">
-                        {formatCurrency(creative.cpc)}
-                      </td>
-                      <td className="py-3 px-4 text-right min-w-[7.5rem]">
-                        {formatNumber(creative.engagements)}
-                      </td>
-                    </tr>
-                  ))}
+                  {paginatedData.map((creative, index) => {
+                    const mediaData = googleDriveApi.findMediaForCreative(creative.promotedPinName, creativeMedias)
+
+                    return (
+                      <tr key={`${creative.adId}-${index}`} className={index % 2 === 0 ? "bg-red-50" : "bg-white"}>
+                        <td className="py-3 px-4 w-[5rem]">
+                          <MediaThumbnail
+                            mediaData={mediaData}
+                            creativeName={creative.promotedPinName}
+                            isLoading={mediasLoading}
+                            size="md"
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="font-medium text-gray-900 text-sm leading-tight whitespace-normal break-words">
+                              {creative.promotedPinName}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">{truncateText(creative.campaignName, 40)}</p>
+                            <p className="text-xs text-gray-400 mt-1">ID: {creative.adId}</p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-right font-semibold min-w-[7.5rem]">
+                          {formatCurrency(creative.cost)}
+                        </td>
+                        <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.impressions)}</td>
+                        <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.clicks)}</td>
+                        <td className="py-3 px-4 text-right min-w-[7.5rem]">{creative.ctr.toFixed(2)}%</td>
+                        <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatCurrency(creative.cpm)}</td>
+                        <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatCurrency(creative.cpc)}</td>
+                        <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.engagements)}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
 
-            {/* Paginação */}
             <div className="flex items-center justify-between mt-6">
               <div className="text-sm text-gray-500">
                 Mostrando {(currentPage - 1) * itemsPerPage + 1} -{" "}
@@ -478,9 +470,6 @@ const CriativosPinterest: React.FC = () => {
           </>
         )}
       </div>
-
-      {/* Modal do Criativo */}
-      <CreativeModal creative={selectedCreative} isOpen={isModalOpen} onClose={closeCreativeModal} />
     </div>
   )
 }

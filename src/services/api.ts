@@ -6,6 +6,38 @@ import axios from "axios"
 const API_BASE_URL = "https://api-google-sheets-7zph.vercel.app"
 const API_NACIONAL_URL = "https://api-nacional.vercel.app"
 
+export const API_NACIONAL_URL_v2 = "https://api-nacional.vercel.app"
+export const PLATFORM_FOLDERS = {
+  meta: "1d0cYXZVyaRuxEazg50mXwLf-9WKnl-TV",
+  pinterest: "1tgeWGAHm7TJSCfhQ25Lffy-tiZ46D6kp",
+  tiktok: "1ePi_3nKjBpTw_tYobt1QuRRO9NkE4aYm",
+} as const
+
+// Tipos para as respostas da API
+export interface DriveFile {
+  id: string
+  name: string
+  mimeType: string
+  createdTime: string
+  modifiedTime: string
+  size?: string
+  webViewLink?: string
+}
+
+export interface DriveApiResponse {
+  success: boolean
+  data: DriveFile[]
+  total: number
+}
+
+export interface FileDetailsResponse {
+  success: boolean
+  data: DriveFile & {
+    parents: string[]
+    webViewLink: string
+  }
+}
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,

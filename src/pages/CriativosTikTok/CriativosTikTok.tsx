@@ -1,10 +1,13 @@
+
 "use client"
 
 import type React from "react"
 import { useState, useEffect, useMemo } from "react"
-import { Calendar, Filter } from "lucide-react"
+import { Calendar } from "lucide-react"
 import { useTikTokNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
+import { googleDriveApi } from "../../services/googleDriveApi"
+import MediaThumbnail from "../../components/MediaThumbnail/MediaThumbnail" // Importe o novo componente
 
 interface CreativeData {
   date: string
@@ -40,85 +43,99 @@ const CriativosTikTok: React.FC = () => {
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+  
+  // Mudança principal: usar novo tipo de dados para mídias
+  const [creativeMedias, setCreativeMedias] = useState<Map<string, { url: string, type: string }>>(new Map())
+  const [mediasLoading, setMediasLoading] = useState(false)
 
-  // Processar dados da API
- useEffect(() => {
-  const values = apiData?.data?.values;
-  if (!values || values.length <= 1) return;
+  useEffect(() => {
+    const loadMedias = async () => {
+      setMediasLoading(true)
+      try {
+        const mediaMap = await googleDriveApi.getPlatformImages("tiktok")
+        setCreativeMedias(mediaMap)
+      } catch (error) {
+        console.error("Error loading TikTok medias:", error)
+      } finally {
+        setMediasLoading(false)
+      }
+    }
 
-  const headers = values[0];
-  const rows = values.slice(1);
+    loadMedias()
+  }, [])
 
-  const parseNumber = (v: string) => {
-    if (!v?.trim()) return 0;
-    const clean = v.replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
-    return isNaN(+clean) ? 0 : +clean;
-  };
+  useEffect(() => {
+    const values = apiData?.data?.values
+    if (!values || values.length <= 1) return
 
-  const parseInteger = (v: string) => {
-    if (!v?.trim()) return 0;
-    const clean = v.replace(/\./g, "").replace(",", "");
-    const n = parseInt(clean, 10);
-    return isNaN(n) ? 0 : n;
-  };
+    const headers = values[0]
+    const rows = values.slice(1)
 
-  // 1) faço o map e trato como CreativeData[]
-  const mapped: CreativeData[] = rows.map((row: string[]) => {
-    const get = (field: string) => {
-      const idx = headers.indexOf(field);
-      return idx >= 0 ? row[idx] ?? "" : "";
-    };
-    return {
-      date: get("Date"),
-      campaignName: get("Campaign name"),
-      adGroupName: get("Ad group name"),
-      adName: get("Ad name"),
-      adText: get("Ad text"),
-      videoThumbnailUrl: get("Video thumbnail URL"),
-      impressions: parseInteger(get("Impressions")),
-      clicks: parseInteger(get("Clicks")),
-      cost: parseNumber(get("Cost")),
-      cpc: parseNumber(get("CPC")),
-      cpm: parseNumber(get("CPM")),
-      reach: parseInteger(get("Reach")),
-      frequency: parseNumber(get("Frequency")),
-      results: parseInteger(get("Results")),
-      videoViews: parseInteger(get("Video views")),
-      twoSecondVideoViews: parseInteger(get("2-second video views")),
-      videoViews25: parseInteger(get("Video views at 25%")),
-      videoViews50: parseInteger(get("Video views at 50%")),
-      videoViews75: parseInteger(get("Video views at 75%")),
-      videoViews100: parseInteger(get("Video views at 100%")),
-      profileVisits: parseInteger(get("Profile visits")),
-      paidLikes: parseInteger(get("Paid likes")),
-      paidComments: parseInteger(get("Paid comments")),
-      paidShares: parseInteger(get("Paid shares")),
-      paidFollows: parseInteger(get("Paid follows")),
-    };
-  });
+    const parseNumber = (v: string) => {
+      if (!v?.trim()) return 0
+      const clean = v
+        .replace(/[R$\s]/g, "")
+        .replace(/\./g, "")
+        .replace(",", ".")
+      return isNaN(+clean) ? 0 : +clean
+    }
 
-  // 2) explicitamente tipamos o parâmetro do filter
-  const processed: CreativeData[] = mapped.filter(
-    (item: CreativeData): item is CreativeData => Boolean(item.date)
-  );
+    const parseInteger = (v: string) => {
+      if (!v?.trim()) return 0
+      const clean = v.replace(/\./g, "").replace(",", "")
+      const n = Number.parseInt(clean, 10)
+      return isNaN(n) ? 0 : n
+    }
 
-  setProcessedData(processed);
+    const mapped: CreativeData[] = rows.map((row: string[]) => {
+      const get = (field: string) => {
+        const idx = headers.indexOf(field)
+        return idx >= 0 ? (row[idx] ?? "") : ""
+      }
+      return {
+        date: get("Date"),
+        campaignName: get("Campaign name"),
+        adGroupName: get("Ad group name"),
+        adName: get("Ad name"),
+        adText: get("Ad text"),
+        videoThumbnailUrl: get("Video thumbnail URL"),
+        impressions: parseInteger(get("Impressions")),
+        clicks: parseInteger(get("Clicks")),
+        cost: parseNumber(get("Cost")),
+        cpc: parseNumber(get("CPC")),
+        cpm: parseNumber(get("CPM")),
+        reach: parseInteger(get("Reach")),
+        frequency: parseNumber(get("Frequency")),
+        results: parseInteger(get("Results")),
+        videoViews: parseInteger(get("Video views")),
+        twoSecondVideoViews: parseInteger(get("2-second video views")),
+        videoViews25: parseInteger(get("Video views at 25%")),
+        videoViews50: parseInteger(get("Video views at 50%")),
+        videoViews75: parseInteger(get("Video views at 75%")),
+        videoViews100: parseInteger(get("Video views at 100%")),
+        profileVisits: parseInteger(get("Profile visits")),
+        paidLikes: parseInteger(get("Paid likes")),
+        paidComments: parseInteger(get("Paid comments")),
+        paidShares: parseInteger(get("Paid shares")),
+        paidFollows: parseInteger(get("Paid follows")),
+      }
+    })
 
-    const allDates = processed
-      .map((i) => new Date(i.date))
-      .sort((a, b) => a.getTime() - b.getTime());
+    const processed: CreativeData[] = mapped.filter((item: CreativeData): item is CreativeData => Boolean(item.date))
+
+    setProcessedData(processed)
+
+    const allDates = processed.map((i) => new Date(i.date)).sort((a, b) => a.getTime() - b.getTime())
 
     setDateRange({
       start: allDates[0].toISOString().slice(0, 10),
       end: allDates[allDates.length - 1].toISOString().slice(0, 10),
-    });
-  }, [apiData]);
+    })
+  }, [apiData])
 
-  // Filtrar dados (removido filtro de praça)
   const filteredData = useMemo(() => {
     let filtered = processedData
 
-    // Filtro por período
     if (dateRange.start && dateRange.end) {
       filtered = filtered.filter((item) => {
         const itemDate = new Date(item.date)
@@ -128,10 +145,9 @@ const CriativosTikTok: React.FC = () => {
       })
     }
 
-    // Agrupar por criativo APÓS a filtragem
     const groupedData: Record<string, CreativeData> = {}
     filtered.forEach((item) => {
-      const key = `${item.adName}_${item.videoThumbnailUrl || 'no-thumbnail'}`
+      const key = `${item.adName}_${item.videoThumbnailUrl || "no-thumbnail"}`
       if (!groupedData[key]) {
         groupedData[key] = { ...item }
       } else {
@@ -154,7 +170,6 @@ const CriativosTikTok: React.FC = () => {
       }
     })
 
-    // Recalcular métricas derivadas
     const finalData = Object.values(groupedData).map((item) => ({
       ...item,
       cpm: item.impressions > 0 ? item.cost / (item.impressions / 1000) : 0,
@@ -162,13 +177,11 @@ const CriativosTikTok: React.FC = () => {
       frequency: item.reach > 0 ? item.impressions / item.reach : 0,
     }))
 
-    // Ordenar por investimento (custo) decrescente
     finalData.sort((a, b) => b.cost - a.cost)
 
     return finalData
   }, [processedData, dateRange])
 
-  // Paginação
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
@@ -177,7 +190,6 @@ const CriativosTikTok: React.FC = () => {
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
 
-  // Calcular totais
   const totals = useMemo(() => {
     return {
       investment: filteredData.reduce((sum, item) => sum + item.cost, 0),
@@ -195,7 +207,6 @@ const CriativosTikTok: React.FC = () => {
     }
   }, [filteredData])
 
-  // Calcular médias
   if (filteredData.length > 0) {
     totals.avgCpm = totals.impressions > 0 ? totals.investment / (totals.impressions / 1000) : 0
     totals.avgCpc = totals.clicks > 0 ? totals.investment / totals.clicks : 0
@@ -204,7 +215,6 @@ const CriativosTikTok: React.FC = () => {
     totals.vtr = totals.impressions > 0 ? (totals.videoViews100 / totals.impressions) * 100 : 0
   }
 
-  // Função para formatar números
   const formatNumber = (value: number): string => {
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(1)}M`
@@ -215,7 +225,6 @@ const CriativosTikTok: React.FC = () => {
     return value.toLocaleString("pt-BR")
   }
 
-  // Função para formatar moeda
   const formatCurrency = (value: number): string => {
     return value.toLocaleString("pt-BR", {
       style: "currency",
@@ -232,7 +241,7 @@ const CriativosTikTok: React.FC = () => {
       <div className="bg-red-50/90 backdrop-blur-sm border border-red-200 rounded-lg p-4">
         <p className="text-red-600">Erro ao carregar dados: {error.message}</p>
         <p className="text-red-500 text-sm mt-2">
-          Verifique se a API está funcionando corretamente: 
+          Verifique se a API está funcionando corretamente:
           https://api-nacional.vercel.app/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=TikTok
         </p>
       </div>
@@ -241,7 +250,6 @@ const CriativosTikTok: React.FC = () => {
 
   return (
     <div className="space-y-6 h-full flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-red-600 rounded-lg flex items-center justify-center">
@@ -261,10 +269,8 @@ const CriativosTikTok: React.FC = () => {
         </div>
       </div>
 
-      {/* Filtros */}
       <div className="card-overlay rounded-lg shadow-lg p-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Filtro de Data */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
               <Calendar className="w-4 h-4 mr-2" />
@@ -286,7 +292,6 @@ const CriativosTikTok: React.FC = () => {
             </div>
           </div>
 
-          {/* Informações adicionais */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Total de Criativos</label>
             <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm text-gray-600">
@@ -296,33 +301,7 @@ const CriativosTikTok: React.FC = () => {
         </div>
       </div>
 
-      {/* Métricas Principais */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-        <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
-          <div className="text-sm text-gray-600 mb-1">Investimento</div>
-          <div className="text-lg font-bold text-gray-900">{formatCurrency(totals.investment)}</div>
-        </div>
-
-        <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
-          <div className="text-sm text-gray-600 mb-1">Impressões</div>
-          <div className="text-lg font-bold text-gray-900">{formatNumber(totals.impressions)}</div>
-        </div>
-
-        <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
-          <div className="text-sm text-gray-600 mb-1">Alcance</div>
-          <div className="text-lg font-bold text-gray-900">{formatNumber(totals.reach)}</div>
-        </div>
-
-        <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
-          <div className="text-sm text-gray-600 mb-1">Cliques</div>
-          <div className="text-lg font-bold text-gray-900">{formatNumber(totals.clicks)}</div>
-        </div>
-
-        <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
-          <div className="text-sm text-gray-600 mb-1">CPM</div>
-          <div className="text-lg font-bold text-gray-900">{formatCurrency(totals.avgCpm)}</div>
-        </div>
-
         <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
           <div className="text-sm text-gray-600 mb-1">CPC</div>
           <div className="text-lg font-bold text-gray-900">{formatCurrency(totals.avgCpc)}</div>
@@ -339,13 +318,12 @@ const CriativosTikTok: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabela de Criativos */}
       <div className="flex-1 card-overlay rounded-lg shadow-lg p-6">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-pink-600 text-white">
-                <th className="text-left py-3 px-4 font-semibold w-[5rem]">Imagem</th>
+                <th className="text-left py-3 px-4 font-semibold w-[5rem]">Mídia</th>
                 <th className="text-left py-3 px-4 font-semibold">Criativo</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">Investimento</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">Impressões</th>
@@ -360,30 +338,54 @@ const CriativosTikTok: React.FC = () => {
               {paginatedData.map((creative, index) => {
                 const vtr = creative.impressions > 0 ? (creative.videoViews100 / creative.impressions) * 100 : 0
 
+                // Buscar mídia do Google Drive primeiro, depois usar thumbnail do TikTok
+                const driveMediaData = googleDriveApi.findMediaForCreative(creative.adName, creativeMedias)
+                const tiktokThumbnail = creative.videoThumbnailUrl
+
                 return (
                   <tr key={index} className={index % 2 === 0 ? "bg-pink-50" : "bg-white"}>
                     <td className="py-3 px-4 w-[5rem]">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-                        {creative.videoThumbnailUrl ? (
+                      {driveMediaData ? (
+                        <MediaThumbnail
+                          mediaData={driveMediaData}
+                          creativeName={creative.adName}
+                          isLoading={mediasLoading}
+                          size="md"
+                        />
+                      ) : tiktokThumbnail ? (
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center relative">
                           <img
-                            src={creative.videoThumbnailUrl || "/placeholder.svg"}
-                            alt="Criativo"
+                            src={tiktokThumbnail}
+                            alt="Thumbnail TikTok"
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement
                               target.style.display = "none"
                               if (target.parentElement) {
-                                target.parentElement.innerHTML = '<div class="text-gray-400 text-xs">Sem imagem</div>'
+                                target.parentElement.innerHTML =
+                                  '<div class="text-gray-400 text-xs text-center">Sem mídia</div>'
                               }
                             }}
                           />
-                        ) : (
-                          <div className="text-gray-400 text-xs">Sem imagem</div>
-                        )}
-                      </div>
+                          <div className="absolute top-1 right-1">
+                            <div className="bg-black bg-opacity-60 rounded-full p-1">
+                              <svg className="w-3 h-3 text-white fill-current" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <MediaThumbnail
+                          mediaData={null}
+                          creativeName={creative.adName}
+                          isLoading={mediasLoading}
+                          size="md"
+                        />
+                      )}
                     </td>
                     <td className="py-3 px-4">
-                      <div className="">
+                      <div>
                         <p className="font-medium text-gray-900 text-sm leading-tight whitespace-normal break-words">
                           {creative.adName}
                         </p>
@@ -413,7 +415,6 @@ const CriativosTikTok: React.FC = () => {
           </table>
         </div>
 
-        {/* Paginação */}
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-gray-500">
             Mostrando {(currentPage - 1) * itemsPerPage + 1} -{" "}

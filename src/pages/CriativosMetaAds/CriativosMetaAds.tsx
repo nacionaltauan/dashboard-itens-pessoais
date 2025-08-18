@@ -1,10 +1,10 @@
 "use client"
-
-import type React from "react"
-import { useState, useEffect, useMemo, useCallback, FC } from "react"
-import { Calendar, Filter } from "lucide-react"
+import { useState, useEffect, useMemo, useCallback, type FC } from "react"
+import { Calendar } from "lucide-react"
 import { apiNacional } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
+import { googleDriveApi } from "../../services/googleDriveApi"
+import MediaThumbnail from "../../components/MediaThumbnail/MediaThumbnail" // Importe o novo componente
 
 interface CreativeData {
   date: string
@@ -37,9 +37,9 @@ const useMetaTratadoData = () => {
     try {
       setLoading(true)
       const response = await apiNacional.get(
-        "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Meta%20-%20Tratado"
+        "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Meta%20-%20Tratado",
       )
-      setData(response.data.data) // Acessa response.data.data baseado na estrutura da resposta
+      setData(response.data.data)
       setError(null)
     } catch (err) {
       setError(err as Error)
@@ -63,8 +63,27 @@ const CriativosMeta: FC = () => {
   const [availablePracas, setAvailablePracas] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+  
+  // Mudança principal: usar novo tipo de dados para mídias
+  const [creativeMedias, setCreativeMedias] = useState<Map<string, { url: string, type: string }>>(new Map())
+  const [mediasLoading, setMediasLoading] = useState(false)
 
-  // Processar dados da API
+  useEffect(() => {
+    const loadMedias = async () => {
+      setMediasLoading(true)
+      try {
+        const mediaMap = await googleDriveApi.getPlatformImages("meta")
+        setCreativeMedias(mediaMap)
+      } catch (error) {
+        console.error("Error loading Meta medias:", error)
+      } finally {
+        setMediasLoading(false)
+      }
+    }
+
+    loadMedias()
+  }, [])
+
   useEffect(() => {
     if (apiData?.values) {
       const headers = apiData.values[0]
@@ -130,15 +149,17 @@ const CriativosMeta: FC = () => {
 
       // Definir range de datas inicial
       if (processed.length > 0) {
-        const dates = processed.map((item) => {
-          // Converter formato dd/mm/yyyy para yyyy-mm-dd
-          const dateParts = item.date.split("/")
-          if (dateParts.length === 3) {
-            return new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`)
-          }
-          return new Date(item.date)
-        }).sort((a, b) => a.getTime() - b.getTime())
-        
+        const dates = processed
+          .map((item) => {
+            // Converter formato dd/mm/yyyy para yyyy-mm-dd
+            const dateParts = item.date.split("/")
+            if (dateParts.length === 3) {
+              return new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`)
+            }
+            return new Date(item.date)
+          })
+          .sort((a, b) => a.getTime() - b.getTime())
+
         const startDate = dates[0].toISOString().split("T")[0]
         const endDate = dates[dates.length - 1].toISOString().split("T")[0]
         setDateRange({ start: startDate, end: endDate })
@@ -175,7 +196,7 @@ const CriativosMeta: FC = () => {
         } else {
           itemDate = new Date(item.date)
         }
-        
+
         const startDate = new Date(dateRange.start)
         const endDate = new Date(dateRange.end)
         return itemDate >= startDate && itemDate <= endDate
@@ -282,12 +303,12 @@ const CriativosMeta: FC = () => {
   const getPracaName = (codigo: string): string => {
     const pracaMap: Record<string, string> = {
       BSB: "Brasília",
-      BH: "Belo Horizonte", 
+      BH: "Belo Horizonte",
       RJ: "Rio de Janeiro",
       SP: "São Paulo",
       SSA: "Salvador",
       SAO: "São Paulo",
-      NACIONAL: "Nacional"
+      NACIONAL: "Nacional",
     }
     return pracaMap[codigo] || codigo
   }
@@ -359,7 +380,23 @@ const CriativosMeta: FC = () => {
               />
             </div>
           </div>
-          
+
+          {/* Filtro de Praça */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Praça</label>
+            <select
+              value={selectedPraca}
+              onChange={(e) => setSelectedPraca(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              <option value="">Todas as praças</option>
+              {availablePracas.map((praca) => (
+                <option key={praca} value={praca}>
+                  {getPracaName(praca)}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Informações adicionais */}
           <div>
@@ -420,6 +457,7 @@ const CriativosMeta: FC = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-blue-600 text-white">
+                <th className="text-left py-3 px-4 font-semibold w-[5rem]">Mídia</th>
                 <th className="text-left py-3 px-4 font-semibold">Criativo</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">Investimento</th>
                 <th className="text-right py-3 px-4 font-semibold min-w-[7.5rem]">Impressões</th>
@@ -432,30 +470,42 @@ const CriativosMeta: FC = () => {
               </tr>
             </thead>
             <tbody>
-              {paginatedData.map((creative, index) => (
-                <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
-                  <td className="py-3 px-4">
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm leading-tight whitespace-normal break-words">
-                        {creative.creativeTitle}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1 leading-tight whitespace-normal break-words">
-                        {creative.campaignName}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right font-semibold min-w-[7.5rem]">
-                    {formatCurrency(creative.totalSpent)}
-                  </td>
-                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.impressions)}</td>
-                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.reach)}</td>
-                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.clicks)}</td>
-                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.videoViews)}</td>
-                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatCurrency(creative.cpm)}</td>
-                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatCurrency(creative.cpc)}</td>
-                  <td className="py-3 px-4 text-right min-w-[7.5rem]">{creative.ctr.toFixed(2)}%</td>
-                </tr>
-              ))}
+              {paginatedData.map((creative, index) => {
+                const mediaData = googleDriveApi.findMediaForCreative(creative.creativeTitle, creativeMedias)
+
+                return (
+                  <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
+                    <td className="py-3 px-4 w-[5rem]">
+                      <MediaThumbnail
+                        mediaData={mediaData}
+                        creativeName={creative.creativeTitle}
+                        isLoading={mediasLoading}
+                        size="md"
+                      />
+                    </td>
+                    <td className="py-3 px-4">
+                      <div>
+                        <p className="font-medium text-gray-900 text-sm leading-tight whitespace-normal break-words">
+                          {creative.creativeTitle}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1 leading-tight whitespace-normal break-words">
+                          {creative.campaignName}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-right font-semibold min-w-[7.5rem]">
+                      {formatCurrency(creative.totalSpent)}
+                    </td>
+                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.impressions)}</td>
+                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.reach)}</td>
+                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.clicks)}</td>
+                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatNumber(creative.videoViews)}</td>
+                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatCurrency(creative.cpm)}</td>
+                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{formatCurrency(creative.cpc)}</td>
+                    <td className="py-3 px-4 text-right min-w-[7.5rem]">{creative.ctr.toFixed(2)}%</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
