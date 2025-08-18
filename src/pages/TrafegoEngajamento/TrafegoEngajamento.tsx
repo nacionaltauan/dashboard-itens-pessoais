@@ -2,13 +2,14 @@
 
 import type React from "react"
 import { useState, useMemo } from "react"
-import { TrendingUp, Calendar, MousePointer, Clock, Users, BarChart3, MessageCircle, Phone, HandHeart } from "lucide-react"
+import { TrendingUp, Calendar, Users, BarChart3, MessageCircle, Phone, HandHeart } from "lucide-react"
 import Loading from "../../components/Loading/Loading"
 import { 
   useGA4ResumoNacionalData, 
   useGA4CompletoNacionalData, 
-  useGA4SourceNacionalData 
-} from "../../services/api" // Importar novas APIs
+  useGA4SourceNacionalData,
+  useEventosReceptivosData 
+} from "../../services/api"
 import BrazilMap from "../../components/BrazilMap/BrazilMap" // Importar novo componente de mapa
 
 type TrafegoEngajamentoProps = {}
@@ -49,10 +50,23 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
   const { data: ga4ResumoData, loading: resumoLoading, error: resumoError } = useGA4ResumoNacionalData()
   const { data: ga4CompletoData, loading: completoLoading, error: completoError } = useGA4CompletoNacionalData()
   const { data: ga4SourceData, loading: sourceLoading, error: sourceError } = useGA4SourceNacionalData()
+  const { data: eventosReceptivosData, loading: eventosLoading, error: eventosError } = useEventosReceptivosData()
+
+
+  console.log("Dados ga4ResumoData:", ga4ResumoData)
+
+  // Função para formatar a data como YYYY-MM-DD
+  const getTodayDateString = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // Adiciona um zero à esquerda se necessário
+    const day = String(today.getDate()).padStart(2, '0'); // Adiciona um zero à esquerda se necessário
+    return `${year}-${month}-${day}`;
+  };
 
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
     start: "2025-07-28",
-    end: "2025-08-04",
+    end: getTodayDateString(), // Define o 'end' como a data de hoje
   })
 
   // Função para verificar se uma data está dentro do range selecionado
@@ -92,12 +106,10 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
 
   // Processamento dos dados da API GA4 Source (nova funcionalidade) com filtro de data
   const processedSourceData = useMemo(() => {
-    console.log("=== DEBUG SOURCE DATA ===")
-    console.log("GA4 Source Data:", ga4SourceData)
     
     // CORREÇÃO: Verificar se existe data.values ao invés de só values
     if (!ga4SourceData?.data?.values || ga4SourceData.data.values.length <= 1) {
-      console.log("❌ Dados GA4 Source vazios ou inválidos")
+
       return {
         veiculosDetalhados: [],
         fontesPorPlataforma: {},
@@ -110,8 +122,6 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     const headers = ga4SourceData.data.values[0]
     const rows = ga4SourceData.data.values.slice(1)
 
-    console.log("Headers GA4 Source:", headers)
-    console.log("Total de linhas Source:", rows.length)
 
     // Índices das colunas
     const dateIndex = headers.indexOf("Date")
@@ -119,28 +129,18 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     const sourceIndex = headers.indexOf("Session manual source")
     const sessionsIndex = headers.indexOf("Sessions")
 
-    console.log("Índices Source encontrados:")
-    console.log("- Date:", dateIndex)
-    console.log("- Session manual source:", sourceIndex)
-    console.log("- Sessions:", sessionsIndex)
 
     const sourceData: { [key: string]: number } = {}
     const dataResumo: { [key: string]: number } = {}
     let totalSessions = 0
 
-    console.log("=== PROCESSANDO LINHAS SOURCE ===")
     rows.forEach((row: any[], index: number) => {
       const date = row[dateIndex] || ""
 
-      console.log(`Linha ${index}:`, {
-        date,
-        source: row[sourceIndex],
-        sessions: row[sessionsIndex]
-      })
-
+     
       // Aplicar filtro de data
       if (!isDateInRange(date)) {
-        console.log(`❌ Data ${date} fora do range`)
+       
         return
       }
 
@@ -159,13 +159,8 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
           dataResumo[date] = (dataResumo[date] || 0) + sessions
         }
 
-        console.log(`✅ Processando source: ${source}, Sessions: ${sessions}`)
       }
     })
-
-    console.log("=== RESULTADOS FINAIS SOURCE ===")
-    console.log("Total Sessions:", totalSessions)
-    console.log("Source Data:", sourceData)
 
     // Converter em arrays ordenados usando SOURCE
     const veiculosDetalhados = Object.entries(sourceData)
@@ -185,14 +180,61 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     }
   }, [ga4SourceData, dateRange])
 
-  // ADICIONAR CONSOLE.LOG PARA DEBUG NO INÍCIO DO processedResumoData
+  const processedEventosData = useMemo(() => {
+  if (!eventosReceptivosData?.data?.values || eventosReceptivosData.data.values.length <= 1) {
+    return {
+      whatsappCliques: 0,
+      contrateAgoraCliques: 0,
+      faleConoscoCliques: 0,
+      totalCTAs: 0,
+    }
+  }
+
+  const headers = eventosReceptivosData.data.values[0]
+  const rows = eventosReceptivosData.data.values.slice(1)
+
+  // Índices das colunas
+  const dateIndex = headers.indexOf("Date")
+  const eventNameIndex = headers.indexOf("Event name") 
+  const eventCountIndex = headers.indexOf("Event count")
+
+  let whatsappTotal = 0
+  let contrateAgoraTotal = 0
+  let faleConoscoTotal = 0
+
+  rows.forEach((row: any[]) => {
+    const date = row[dateIndex] || ""
+    
+    // Aplicar filtro de data
+    if (!isDateInRange(date)) {
+      return
+    }
+
+    const eventName = row[eventNameIndex] || ""
+    const eventCount = parseInt(row[eventCountIndex]) || 0
+
+    // Mapear eventos para categorias
+    if (eventName === "clique_whatsapp_flutuante") {
+      whatsappTotal += eventCount
+    } else if (eventName === "clique_cta_contrate_agora" || eventName === "mobile_clique_cta_contrate_aqui") {
+      contrateAgoraTotal += eventCount
+    } else if (eventName === "clique_cta_fale_com_a_gente") {
+      faleConoscoTotal += eventCount
+    }
+  })
+
+  return {
+    whatsappCliques: whatsappTotal,
+    contrateAgoraCliques: contrateAgoraTotal, 
+    faleConoscoCliques: faleConoscoTotal,
+    totalCTAs: whatsappTotal + contrateAgoraTotal + faleConoscoTotal,
+  }
+}, [eventosReceptivosData, dateRange])
+
   const processedResumoData = useMemo(() => {
-    console.log("=== DEBUG RESUMO DATA ===")
-    console.log("GA4 Resumo Data:", ga4ResumoData)
     
     // CORREÇÃO: Verificar se existe data.values ao invés de só values
     if (!ga4ResumoData?.data?.values || ga4ResumoData.data.values.length <= 1) {
-      console.log("❌ Dados GA4 Resumo vazios ou inválidos")
       return {
         receptivo: {
           sessoesCampanha: 0,
@@ -213,8 +255,6 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     const headers = ga4ResumoData.data.values[0]
     const rows = ga4ResumoData.data.values.slice(1)
 
-    console.log("Headers GA4 Resumo:", headers)
-    console.log("Total de linhas:", rows.length)
 
     // Índices das colunas
     const dateIndex = headers.indexOf("Date")
@@ -224,21 +264,10 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     const bounceRateIndex = headers.indexOf("Bounce rate")
     const avgDurationIndex = headers.indexOf("Average session duration")
     
-    console.log("Índices encontrados:")
-    console.log("- Date:", dateIndex)
-    console.log("- Region:", regionIndex)
-    console.log("- Device category:", deviceIndex)
-    console.log("- Sessions:", sessionsIndex)
-    
     // Novos CTAs
     const whatsappIndex = headers.indexOf("Key event count for clique_whatsapp_flutuante")
     const contrateAgoraIndex = headers.indexOf("Key event count for clique_cta_contrate_agora")
     const faleConoscoIndex = headers.indexOf("Key event count for clique_cta_fale_com_a_gente")
-
-    console.log("Índices CTAs:")
-    console.log("- WhatsApp:", whatsappIndex)
-    console.log("- Contrate Agora:", contrateAgoraIndex)
-    console.log("- Fale Conosco:", faleConoscoIndex)
 
     let totalSessions = 0
     let totalSaibaMais = 0
@@ -253,20 +282,11 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     const deviceData: { [key: string]: number } = {}
     const regionData: { [key: string]: number } = {}
 
-    console.log("=== PROCESSANDO LINHAS ===")
     rows.forEach((row: any[], index: number) => {
       const date = row[dateIndex] || ""
       
-      console.log(`Linha ${index}:`, {
-        date,
-        region: row[regionIndex],
-        device: row[deviceIndex],
-        sessions: row[sessionsIndex]
-      })
-
       // Aplicar filtro de data
       if (!isDateInRange(date)) {
-        console.log(`❌ Data ${date} fora do range`)
         return
       }
 
@@ -297,21 +317,13 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
 
         // Regiões - Converter o nome do estado para o formato esperado pelo mapa
         if (region !== "(not set)" && region.trim() !== "" && region !== " " && region !== "Outros") {
-          console.log(`✅ Processando região: ${region}`)
           const normalizedRegion = API_TO_GEOJSON_STATE_NAMES[region] || region
           regionData[normalizedRegion] = (regionData[normalizedRegion] || 0) + sessions
-          console.log(`   Normalizada para: ${normalizedRegion}, Sessions: ${sessions}`)
         } else {
-          console.log(`❌ Região ignorada: ${region}`)
         }
       }
     })
-
-    console.log("=== RESULTADOS FINAIS ===")
-    console.log("Total Sessions:", totalSessions)
-    console.log("Device Data:", deviceData)
-    console.log("Region Data:", regionData)
-    console.log("CTAs:", { totalWhatsapp, totalContrateAgora, totalFaleConosco })
+   
 
     // Converter em arrays ordenados
     const dispositivos = Object.entries(deviceData)
@@ -347,18 +359,15 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
       dadosRegiao: regionData,
     }
 
-    console.log("=== RESULTADO FINAL ===", resultado)
     return resultado
   }, [ga4ResumoData, dateRange])
 
   // Processamento dos dados da NOVA API GA4 Completo (para os novos cards) com filtro de data
   const processedCompletoData = useMemo(() => {
-    console.log("=== DEBUG COMPLETO DATA ===")
-    console.log("GA4 Completo Data:", ga4CompletoData)
+    
     
     // CORREÇÃO: Verificar se existe data.values ao invés de só values
     if (!ga4CompletoData?.data?.values || ga4CompletoData.data.values.length <= 1) {
-      console.log("❌ Dados GA4 Completo vazios ou inválidos")
       return {
         totalSessions: 0,
         totalEvents: 0,
@@ -369,34 +378,22 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     const headers = ga4CompletoData.data.values[0]
     const rows = ga4CompletoData.data.values.slice(1)
 
-    console.log("Headers GA4 Completo:", headers)
-    console.log("Total de linhas Completo:", rows.length)
+    
 
     const dateIndex = headers.indexOf("Date")
     const sessionsIndex = headers.indexOf("Sessions")
     const eventCountIndex = headers.indexOf("Event count")
 
-    console.log("Índices Completo encontrados:")
-    console.log("- Date:", dateIndex)
-    console.log("- Sessions:", sessionsIndex)
-    console.log("- Event count:", eventCountIndex)
+    
 
     let totalSessions = 0
     let totalEvents = 0
 
-    console.log("=== PROCESSANDO LINHAS COMPLETO ===")
     rows.forEach((row: any[], index: number) => {
       const date = row[dateIndex] || ""
-
-      console.log(`Linha ${index}:`, {
-        date,
-        sessions: row[sessionsIndex],
-        events: row[eventCountIndex]
-      })
-
+     
       // Aplicar filtro de data
       if (!isDateInRange(date)) {
-        console.log(`❌ Data ${date} fora do range`)
         return
       }
 
@@ -406,13 +403,8 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
       totalSessions += sessions
       totalEvents += events
 
-      console.log(`✅ Sessions: ${sessions}, Events: ${events}`)
     })
-
-    console.log("=== RESULTADOS FINAIS COMPLETO ===")
-    console.log("Total Sessions:", totalSessions)
-    console.log("Total Events:", totalEvents)
-
+    
     return {
       totalSessions,
       totalEvents,
@@ -474,11 +466,11 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     </div>
   )
 
-  if (resumoLoading || completoLoading || sourceLoading) {
-    return <Loading message="Carregando dados de tráfego e engajamento..." />
-  }
+  if (resumoLoading || completoLoading || sourceLoading || eventosLoading) {
+  return <Loading message="Carregando dados de tráfego e engajamento..." />
+}
 
-  if (resumoError || completoError || sourceError) {
+  if (resumoError || completoError || sourceError || eventosError) {
     return (
       <div className="p-6 text-center">
         <div className="text-red-500 mb-2">Erro ao carregar dados</div>
@@ -486,6 +478,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
         {resumoError && <p className="text-xs text-red-400">{resumoError.message}</p>}
         {completoError && <p className="text-xs text-red-400">{completoError.message}</p>}
         {sourceError && <p className="text-xs text-red-400">{sourceError.message}</p>}
+        {eventosError && <p className="text-xs text-red-400">{eventosError.message}</p>}
       </div>
     )
   }
@@ -548,7 +541,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
                 <div>
                   <p className="text-xs font-medium text-blue-600">WhatsApp</p>
                   <p className="text-lg font-bold text-blue-900">
-                    {formatNumber(processedResumoData.receptivo.cliquesWhatsapp)}
+                    {formatNumber(processedEventosData.whatsappCliques)}
                   </p>
                 </div>
                 <MessageCircle className="w-6 h-6 text-blue-600" />
@@ -560,7 +553,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
                 <div>
                   <p className="text-xs font-medium text-orange-600">Contrate Agora</p>
                   <p className="text-lg font-bold text-orange-900">
-                    {formatNumber(processedResumoData.receptivo.cliquesContrateAgora)}
+                    {formatNumber(processedEventosData.contrateAgoraCliques)}
                   </p>
                 </div>
                 <HandHeart className="w-6 h-6 text-orange-600" />
@@ -572,7 +565,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
                 <div>
                   <p className="text-xs font-medium text-purple-600">Fale Conosco</p>
                   <p className="text-lg font-bold text-purple-900">
-                    {formatNumber(processedResumoData.receptivo.cliquesFaleConosco)}
+                    {formatNumber(processedEventosData.faleConoscoCliques)}
                   </p>
                 </div>
                 <Phone className="w-6 h-6 text-purple-600" />
@@ -691,79 +684,86 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
         </div>
       </div>
 
-      {/* Resumo dos CTAs */}
-      <div className="card-overlay rounded-lg shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo de Conversões (CTAs)</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <MessageCircle className="w-5 h-5 text-blue-600 mr-2" />
-                <span className="text-sm font-medium text-blue-700">WhatsApp</span>
-              </div>
-              <span className="text-2xl font-bold text-blue-900">
-                {formatNumber(processedResumoData.receptivo.cliquesWhatsapp)}
-              </span>
+      /* Resumo dos CTAs */
+    <div className="card-overlay rounded-lg shadow-lg p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo de Conversões (CTAs)</h3>
+      
+      {/* GRID CONTAINER PARA OS 3 CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        {/* CARD WHATSAPP */}
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <MessageCircle className="w-5 h-5 text-blue-600 mr-2" />
+              <span className="text-sm font-medium text-blue-700">WhatsApp</span>
             </div>
-            <p className="text-xs text-blue-600">
-              {processedResumoData.receptivo.sessoesCampanha > 0 
-                ? `${((processedResumoData.receptivo.cliquesWhatsapp / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% das sessões`
-                : '0% das sessões'
-              }
-            </p>
+            <span className="text-2xl font-bold text-blue-900">
+              {formatNumber(processedEventosData.whatsappCliques)}
+            </span>
           </div>
-
-          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <HandHeart className="w-5 h-5 text-orange-600 mr-2" />
-                <span className="text-sm font-medium text-orange-700">Contrate Agora</span>
-              </div>
-              <span className="text-2xl font-bold text-orange-900">
-                {formatNumber(processedResumoData.receptivo.cliquesContrateAgora)}
-              </span>
-            </div>
-            <p className="text-xs text-orange-600">
-              {processedResumoData.receptivo.sessoesCampanha > 0 
-                ? `${((processedResumoData.receptivo.cliquesContrateAgora / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% das sessões`
-                : '0% das sessões'
-              }
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center">
-                <Phone className="w-5 h-5 text-purple-600 mr-2" />
-                <span className="text-sm font-medium text-purple-700">Fale Conosco</span>
-              </div>
-              <span className="text-2xl font-bold text-purple-900">
-                {formatNumber(processedResumoData.receptivo.cliquesFaleConosco)}
-              </span>
-            </div>
-            <p className="text-xs text-purple-600">
-              {processedResumoData.receptivo.sessoesCampanha > 0 
-                ? `${((processedResumoData.receptivo.cliquesFaleConosco / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% das sessões`
-                : '0% das sessões'
-              }
-            </p>
-          </div>
+          <p className="text-xs text-blue-600">
+            {processedResumoData.receptivo.sessoesCampanha > 0 
+              ? `${((processedEventosData.whatsappCliques / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% das sessões`
+              : '0% das sessões'
+            }
+          </p>
         </div>
+
+        {/* CARD CONTRATE AGORA */}
+        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <HandHeart className="w-5 h-5 text-orange-600 mr-2" />
+              <span className="text-sm font-medium text-orange-700">Contrate Agora</span>
+            </div>
+            <span className="text-2xl font-bold text-orange-900">
+              {formatNumber(processedEventosData.contrateAgoraCliques)}
+            </span>
+          </div>
+          <p className="text-xs text-orange-600">
+            {processedResumoData.receptivo.sessoesCampanha > 0 
+              ? `${((processedEventosData.contrateAgoraCliques / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% das sessões`
+              : '0% das sessões'
+            }
+          </p>
+        </div>
+
+        {/* CARD FALE CONOSCO */}
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <Phone className="w-5 h-5 text-purple-600 mr-2" />
+              <span className="text-sm font-medium text-purple-700">Fale Conosco</span>
+            </div>
+            <span className="text-2xl font-bold text-purple-900">
+              {formatNumber(processedEventosData.faleConoscoCliques)}
+            </span>
+          </div>
+          <p className="text-xs text-purple-600">
+            {processedResumoData.receptivo.sessoesCampanha > 0 
+              ? `${((processedEventosData.faleConoscoCliques / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% das sessões`
+              : '0% das sessões'
+            }
+          </p>
+        </div>
+      </div>
+
 
         {/* Total de CTAs */}
         <div className="mt-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <TrendingUp className="w-5 h-5 text-gray-600 mr-2" />
-              <span className="text-sm font-medium text-gray-700">Total de Conversões</span>
+              <span className="text-sm font-medium text-gray-700">Total de Eventos CTA's</span>
             </div>
             <div className="text-right">
               <span className="text-3xl font-bold text-gray-900">
-                {formatNumber(processedResumoData.receptivo.cliquesCTAs)}
+                {formatNumber(processedEventosData.totalCTAs)}
               </span>
               <p className="text-xs text-gray-600">
                 {processedResumoData.receptivo.sessoesCampanha > 0 
-                  ? `${((processedResumoData.receptivo.cliquesCTAs / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% taxa de conversão`
+                  ? `${((processedEventosData.totalCTAs / processedResumoData.receptivo.sessoesCampanha) * 100).toFixed(2)}% taxa de conversão`
                   : '0% taxa de conversão'
                 }
               </p>

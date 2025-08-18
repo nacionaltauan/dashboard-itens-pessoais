@@ -86,13 +86,7 @@ const BrazilMap: React.FC<BrazilMapProps> = ({ regionData, getIntensityColor }) 
         const data: StatesCollection = await response.json()
         setGeoData(data)
 
-        // Log the GeoJSON structure for debugging
-        console.log("GeoJSON loaded successfully")
-        console.log("GeoJSON features count:", data.features.length)
-        console.log(
-          "First few state names from GeoJSON:",
-          data.features.slice(0, 5).map((f) => f.properties.name),
-        )
+        
       } catch (error) {
         console.error("Error loading Brazil GeoJSON:", error)
       }
@@ -100,20 +94,10 @@ const BrazilMap: React.FC<BrazilMapProps> = ({ regionData, getIntensityColor }) 
     loadGeoData()
   }, [])
 
-  // Debug: Log regionData para verificar os dados recebidos
-  useEffect(() => {
-    console.log("Region Data recebido pelo BrazilMap:", regionData)
-  }, [regionData])
 
   // D3 map rendering
   useEffect(() => {
     if (!geoData || !svgRef.current) return
-
-    console.log(
-      "GeoJSON state names:",
-      geoData.features.map((f) => f.properties.name),
-    )
-    console.log("Region data keys:", Object.keys(regionData))
 
     const svg = d3.select(svgRef.current)
     svg.selectAll("*").remove() // Clear previous render
@@ -136,9 +120,6 @@ const BrazilMap: React.FC<BrazilMapProps> = ({ regionData, getIntensityColor }) 
       .attr("d", (d: StateFeature) => path(d) || "")
       .attr("fill", (d: StateFeature) => {
         const stateName = d.properties.name // Nome do estado do GeoJSON
-
-        // Debug: Log para verificar o nome do estado e os dados correspondentes
-        console.log(`Verificando estado: ${stateName}, Dados disponíveis:`, regionData[stateName])
 
         // Tenta encontrar os dados de sessão para este estado
         const sessions = regionData[stateName] || 0

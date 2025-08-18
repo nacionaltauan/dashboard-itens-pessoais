@@ -1135,3 +1135,42 @@ export const useGA4ResumoNacionalData = () => {
 
   return { data, loading, error, refetch: loadData }
 }
+
+// NOVA FUNÇÃO para buscar dados de Eventos Receptivos
+export const fetchEventosReceptivosData = async () => {
+  try {
+    const response = await apiNacional.get(
+      "/google/sheets/11Er3KQ1uGFD7qFHFDDG9l4wIlcc2XYVSf0K6i8-jFRk/data?range=Eventos%20receptivo",
+    )
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados de Eventos Receptivos:", error)
+    throw error
+  }
+}
+
+// NOVO HOOK para dados de Eventos Receptivos
+export const useEventosReceptivosData = () => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchEventosReceptivosData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
