@@ -1,4 +1,3 @@
-
 "use client"
 
 import type React from "react"
@@ -8,6 +7,7 @@ import { useTikTokNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 import { googleDriveApi } from "../../services/googleDriveApi"
 import MediaThumbnail from "../../components/MediaThumbnail/MediaThumbnail" // Importe o novo componente
+import TikTokCreativeModal from "./components/TikTokCreativeModal" // Importe o modal
 
 interface CreativeData {
   date: string
@@ -47,6 +47,10 @@ const CriativosTikTok: React.FC = () => {
   // Mudança principal: usar novo tipo de dados para mídias
   const [creativeMedias, setCreativeMedias] = useState<Map<string, { url: string, type: string }>>(new Map())
   const [mediasLoading, setMediasLoading] = useState(false)
+
+  // Estados do modal
+  const [selectedCreative, setSelectedCreative] = useState<CreativeData | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     const loadMedias = async () => {
@@ -232,6 +236,26 @@ const CriativosTikTok: React.FC = () => {
     })
   }
 
+  // Função para abrir o modal
+  const openCreativeModal = (creative: CreativeData) => {
+    // Buscar URL da mídia do Google Drive
+    const driveMediaData = googleDriveApi.findMediaForCreative(creative.adName, creativeMedias)
+    
+    // Criar objeto com mediaUrl para o modal
+    const creativeWithMedia = {
+      ...creative,
+      mediaUrl: driveMediaData?.url || creative.videoThumbnailUrl || undefined
+    }
+    
+    setSelectedCreative(creativeWithMedia)
+    setIsModalOpen(true)
+  }
+
+  const closeCreativeModal = () => {
+    setIsModalOpen(false)
+    setSelectedCreative(null)
+  }
+
   if (loading) {
     return <Loading message="Carregando criativos TikTok..." />
   }
@@ -351,9 +375,13 @@ const CriativosTikTok: React.FC = () => {
                           creativeName={creative.adName}
                           isLoading={mediasLoading}
                           size="md"
+                          onClick={() => openCreativeModal(creative)}
                         />
                       ) : tiktokThumbnail ? (
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                        <div 
+                          className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center relative cursor-pointer group"
+                          onClick={() => openCreativeModal(creative)}
+                        >
                           <img
                             src={tiktokThumbnail}
                             alt="Thumbnail TikTok"
@@ -367,9 +395,9 @@ const CriativosTikTok: React.FC = () => {
                               }
                             }}
                           />
-                          <div className="absolute top-1 right-1">
-                            <div className="bg-black bg-opacity-60 rounded-full p-1">
-                              <svg className="w-3 h-3 text-white fill-current" viewBox="0 0 24 24">
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black bg-opacity-40">
+                            <div className="bg-white bg-opacity-90 rounded-full p-2 shadow-sm">
+                              <svg className="w-4 h-4 text-gray-700 fill-gray-700" viewBox="0 0 24 24">
                                 <path d="M8 5v14l11-7z"/>
                               </svg>
                             </div>
@@ -381,6 +409,7 @@ const CriativosTikTok: React.FC = () => {
                           creativeName={creative.adName}
                           isLoading={mediasLoading}
                           size="md"
+                          onClick={() => openCreativeModal(creative)}
                         />
                       )}
                     </td>
@@ -441,6 +470,13 @@ const CriativosTikTok: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal do Criativo */}
+      <TikTokCreativeModal 
+        creative={selectedCreative}
+        isOpen={isModalOpen}
+        onClose={closeCreativeModal}
+      />
     </div>
   )
 }

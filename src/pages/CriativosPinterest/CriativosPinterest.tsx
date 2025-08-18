@@ -7,6 +7,7 @@ import { usePinterestNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 import { googleDriveApi } from "../../services/googleDriveApi"
 import MediaThumbnail from "../../components/MediaThumbnail/MediaThumbnail" // Importe o novo componente
+import CreativeModal from "./components/CreativeModal" // Modal do Pinterest já existe
 
 interface CreativeData {
   date: string
@@ -55,6 +56,10 @@ const CriativosPinterest: React.FC = () => {
   // Mudança principal: usar novo tipo de dados para mídias
   const [creativeMedias, setCreativeMedias] = useState<Map<string, { url: string, type: string }>>(new Map())
   const [mediasLoading, setMediasLoading] = useState(false)
+
+  // Estados do modal
+  const [selectedCreative, setSelectedCreative] = useState<CreativeData | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     const loadMedias = async () => {
@@ -250,6 +255,26 @@ const CriativosPinterest: React.FC = () => {
   const truncateText = (text: string, maxLength: number): string =>
     text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
 
+  // Função para abrir o modal
+  const openCreativeModal = (creative: CreativeData) => {
+    // Buscar URL da mídia do Google Drive
+    const mediaData = googleDriveApi.findMediaForCreative(creative.promotedPinName, creativeMedias)
+    
+    // Criar objeto com mediaUrl para o modal
+    const creativeWithMedia = {
+      ...creative,
+      mediaUrl: mediaData?.url || undefined
+    }
+    
+    setSelectedCreative(creativeWithMedia)
+    setIsModalOpen(true)
+  }
+
+  const closeCreativeModal = () => {
+    setIsModalOpen(false)
+    setSelectedCreative(null)
+  }
+
   if (loading) {
     return <Loading message="Carregando criativos Pinterest..." />
   }
@@ -415,6 +440,7 @@ const CriativosPinterest: React.FC = () => {
                             creativeName={creative.promotedPinName}
                             isLoading={mediasLoading}
                             size="md"
+                            onClick={() => openCreativeModal(creative)}
                           />
                         </td>
                         <td className="py-3 px-4">
@@ -470,6 +496,13 @@ const CriativosPinterest: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Modal do Criativo */}
+      <CreativeModal 
+        creative={selectedCreative}
+        isOpen={isModalOpen}
+        onClose={closeCreativeModal}
+      />
     </div>
   )
 }
