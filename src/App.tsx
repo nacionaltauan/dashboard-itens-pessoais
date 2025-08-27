@@ -18,7 +18,7 @@ import CriativosPinterest from "./pages/CriativosPinterest/CriativosPinterest"
 import TrafegoEngajamento from "./pages/TrafegoEngajamento/TrafegoEngajamento"
 
 // Substitua pelo seu Google Client ID
-const GOOGLE_CLIENT_ID = "671833846107-d3b90bnlm7bn7aril9klj0oaooe0m0cs.apps.googleusercontent.com"
+const GOOGLE_CLIENT_ID = "815966239613-rmc18h1asv405hk42qetehm5aten52qi.apps.googleusercontent.com"
 
 function App() {
   return (
