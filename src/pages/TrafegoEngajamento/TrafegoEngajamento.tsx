@@ -584,7 +584,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
               </div>
             </div>
 
-            // Cole este novo código no lugar do antigo
+           
             <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div>
