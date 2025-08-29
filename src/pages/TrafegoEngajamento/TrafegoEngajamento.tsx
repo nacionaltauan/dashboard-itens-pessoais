@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useMemo } from "react"
-import { TrendingUp, Calendar, Users, BarChart3, MessageCircle, Phone, HandHeart } from "lucide-react"
+import { TrendingUp, Calendar, Users, BarChart3, MessageCircle, Phone, HandHeart, QrCode } from "lucide-react"
 import Loading from "../../components/Loading/Loading"
 import { 
   useGA4ResumoNacionalData, 
@@ -584,13 +584,18 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-3">
+            // Cole este novo código no lugar do antigo
+            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-red-600">Eventos Totais</p>
-                  <p className="text-lg font-bold text-red-900">{formatNumber(processedCompletoData.totalEvents)}</p>
+                  <p className="text-xs font-medium text-cyan-600">Leituras de QR Code</p>
+                  {/*
+                    AQUI VOCÊ COLOCA O NÚMERO DE LEITURAS.
+                    Basta trocar o número 1500 pelo valor que você quiser.
+                  */}
+                  <p className="text-lg font-bold text-cyan-900">{formatNumber(11)}</p>
                 </div>
-                <TrendingUp className="w-6 h-6 text-red-600" />
+                <QrCode className="w-6 h-6 text-cyan-600" />
               </div>
             </div>
           </div>
