@@ -38,7 +38,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 // Emails específicos autorizados
 const AUTHORIZED_EMAILS = [
   "diogo.bobsin@gmail.com",
-  "thailima@brasilseg.com.br"
+  "thailima@brasilseg.com.br",
+  "veselinnkolev@gmail.com"
 ]
 
 
