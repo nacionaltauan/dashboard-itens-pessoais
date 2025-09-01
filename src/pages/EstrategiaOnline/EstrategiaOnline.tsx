@@ -255,6 +255,7 @@ const EstrategiaOnline: React.FC = () => {
           </div>
         </div>
         <div className="text-sm text-gray-600 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg">
+          <PDFDownloadButton contentRef={contentRef} fileName="estrategia-online" />
           Última atualização: {new Date().toLocaleString("pt-BR")}
         </div>
       </div>
