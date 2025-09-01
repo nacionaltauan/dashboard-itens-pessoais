@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect, useMemo } from "react"
 import { Globe, BarChart3, Tv, Smartphone, Monitor, Eye, Play, MousePointer, Users, Calendar } from "lucide-react"
 import { useEstrategiaOnlineData } from "../../services/api"
+import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
 import Loading from "../../components/Loading/Loading"
 
 interface VehicleData {
