@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Globe, BarChart3, Tv, Smartphone, Monitor, Eye, Play, MousePointer, Users, Calendar } from "lucide-react"
 import { useEstrategiaOnlineData } from "../../services/api"
 import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
@@ -39,6 +39,7 @@ interface AggregatedVehicleData {
 }
 
 const EstrategiaOnline: React.FC = () => {
+  const contentRef = useRef<HTMLDivElement>(null) 
   const { data: estrategiaData, loading, error } = useEstrategiaOnlineData()
   const [vehicleData, setVehicleData] = useState<VehicleData[]>([])
   const [mesesTotals, setMesesTotals] = useState<MesTotals[]>([])
@@ -237,7 +238,7 @@ const EstrategiaOnline: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
+    <div ref={contentRef} className="space-y-6 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
