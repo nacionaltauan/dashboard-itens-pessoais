@@ -798,6 +798,22 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
             </div>
           </div>
         </div>
+
+                {/* Total de CTAs */}
+        <div className="mt-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <TrendingUp className="w-5 h-5 text-gray-600 mr-2" />
+              <span className="text-sm font-medium text-gray-700">Total de Eventos clicáveis</span>
+            </div>
+            <div className="text-right">
+              <span className="text-3xl font-bold text-gray-900">
+                {formatNumber(7946)}
+              </span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* Observações */}
