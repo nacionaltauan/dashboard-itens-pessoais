@@ -1,11 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Calendar } from "lucide-react"
 import { useTikTokNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 import { googleDriveApi } from "../../services/googleDriveApi"
+import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
 import MediaThumbnail from "../../components/MediaThumbnail/MediaThumbnail" // Importe o novo componente
 import TikTokCreativeModal from "./components/TikTokCreativeModal" // Importe o modal
 
@@ -38,6 +39,7 @@ interface CreativeData {
 }
 
 const CriativosTikTok: React.FC = () => {
+  const contentRef = useRef<HTMLDivElement>(null)
   const { data: apiData, loading, error } = useTikTokNacionalData()
   const [processedData, setProcessedData] = useState<CreativeData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
@@ -273,7 +275,7 @@ const CriativosTikTok: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
+    <div ref={contentRef} className="space-y-6 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-red-600 rounded-lg flex items-center justify-center">
@@ -287,8 +289,9 @@ const CriativosTikTok: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-600 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg">
-            Última atualização: {new Date().toLocaleString("pt-BR")}
+          <div className="flex items-center space-x-4 text-sm text-gray-600 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg">
+            <PDFDownloadButton contentRef={contentRef} fileName="criativos-tiktok" />
+            <span>Última atualização: {new Date().toLocaleString("pt-BR")}</span>
           </div>
         </div>
       </div>

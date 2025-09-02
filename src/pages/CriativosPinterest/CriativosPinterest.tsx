@@ -1,11 +1,12 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Calendar, Filter, ArrowUpDown } from "lucide-react"
 import { usePinterestNacionalData } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 import { googleDriveApi } from "../../services/googleDriveApi"
+import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
 import MediaThumbnail from "../../components/MediaThumbnail/MediaThumbnail" // Importe o novo componente
 import CreativeModal from "./components/CreativeModal" // Modal do Pinterest já existe
 
@@ -43,8 +44,8 @@ interface CreativeData {
 }
 
 const CriativosPinterest: React.FC = () => {
+  const contentRef = useRef<HTMLDivElement>(null)
   const { data: apiData, loading, error } = usePinterestNacionalData()
-
   const [processedData, setProcessedData] = useState<CreativeData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [selectedCampaign, setSelectedCampaign] = useState<string>("")
@@ -291,7 +292,7 @@ const CriativosPinterest: React.FC = () => {
   console.log("Processed data length:", processedData.length)
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
+    <div ref={contentRef} className="space-y-6 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-r from-red-600 to-red-700 rounded-lg flex items-center justify-center">
@@ -305,8 +306,9 @@ const CriativosPinterest: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-600 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg">
-            Última atualização: {new Date().toLocaleString("pt-BR")}
+          <div className="flex items-center space-x-4 text-sm text-gray-600 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg">
+            <PDFDownloadButton contentRef={contentRef} fileName="criativos-pinterest" />
+            <span>Última atualização: {new Date().toLocaleString("pt-BR")}</span>
           </div>
         </div>
       </div>
