@@ -600,7 +600,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
                     AQUI VOCÊ COLOCA O NÚMERO DE LEITURAS.
                     Basta trocar o número 1500 pelo valor que você quiser.
                   */}
-                  <p className="text-lg font-bold text-cyan-900">{formatNumber(15)}</p>
+                  <p className="text-lg font-bold text-cyan-900">{formatNumber(16)}</p>
                 </div>
                 <QrCode className="w-6 h-6 text-cyan-600" />
               </div>
