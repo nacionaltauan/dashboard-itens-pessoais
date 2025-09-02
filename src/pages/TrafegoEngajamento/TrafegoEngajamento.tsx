@@ -616,7 +616,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
                   */}
                   <p className="text-lg font-bold text-brown-900">{formatNumber(4)}</p>
                 </div>
-                <QrCode className="w-6 h-6 text-brown-600" />
+                <UserX className="w-6 h-6 text-brown-600" />
               </div>
             </div>
 
