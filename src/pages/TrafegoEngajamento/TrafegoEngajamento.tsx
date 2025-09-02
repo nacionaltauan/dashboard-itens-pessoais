@@ -502,7 +502,6 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
             {/* Lado Direito: Botão */}
             <PDFDownloadButton contentRef={contentRef} fileName="trafego-e-engajamento" />
         </div>
-    </div>
       
       {/* Header Compacto com Filtro de Data e Cards de Métricas */}
       <div className="card-overlay rounded-lg shadow-lg p-4">
