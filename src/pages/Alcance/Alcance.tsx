@@ -1,9 +1,10 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Users, Calendar, Filter, Info } from "lucide-react"
 import { useConsolidadoNacionalData } from "../../services/api"
+import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
 import Loading from "../../components/Loading/Loading"
 
 interface ProcessedData {
@@ -39,6 +40,7 @@ interface PlatformMetrics {
 }
 
 const Alcance: React.FC = () => {
+  const contentRef = useRef<HTMLDivElement>(null)
   const { data: apiData, loading, error } = useConsolidadoNacionalData()
   const [processedData, setProcessedData] = useState<ProcessedData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
@@ -427,7 +429,7 @@ const Alcance: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
+    <div ref={contentRef} className="space-y-6 h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
@@ -439,8 +441,9 @@ const Alcance: React.FC = () => {
             <p className="text-gray-600">Análise de alcance da campanha</p>
           </div>
         </div>
-        <div className="text-sm text-gray-600 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg">
-          Última atualização: {new Date().toLocaleString("pt-BR")}
+        <div className="flex items-center space-x-4 text-sm text-gray-600 bg-white/80 backdrop-blur-sm px-3 py-1 rounded-lg">
+          <PDFDownloadButton contentRef={contentRef} fileName="alcance" />
+          <span>Última atualização: {new Date().toLocaleString("pt-BR")}</span>
         </div>
       </div>
 

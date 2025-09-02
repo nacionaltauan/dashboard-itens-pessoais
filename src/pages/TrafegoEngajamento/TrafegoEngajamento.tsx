@@ -1,9 +1,10 @@
 "use client"
 
 import type React from "react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef } from "react"
 import { TrendingUp, Calendar, Users, BarChart3, MessageCircle, Phone, HandHeart, QrCode } from "lucide-react"
 import Loading from "../../components/Loading/Loading"
+import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
 import { 
   useGA4ResumoNacionalData, 
   useGA4CompletoNacionalData, 
@@ -47,6 +48,7 @@ const API_TO_GEOJSON_STATE_NAMES: { [key: string]: string } = {
 }
 
 const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
+  const contentRef = useRef<HTMLDivElement>(null)
   const { data: ga4ResumoData, loading: resumoLoading, error: resumoError } = useGA4ResumoNacionalData()
   const { data: ga4CompletoData, loading: completoLoading, error: completoError } = useGA4CompletoNacionalData()
   const { data: ga4SourceData, loading: sourceLoading, error: sourceError } = useGA4SourceNacionalData()
@@ -484,15 +486,21 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
   }
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
-      {/* Título e Subtítulo */}
-      <div className="col-span-3 flex items-center space-x-3">
-        <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
-          <TrendingUp className="w-6 h-6 text-white" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Tráfego e Engajamento</h1>
-          <p className="text-xs text-gray-600">Receptivo da campanha</p>
+    <div ref={contentRef} className="space-y-6 h-full flex flex-col">
+      {/* Título e Botão de Download */}
+        <div className="flex justify-between items-center">
+            {/* Lado Esquerdo: Ícone e Título */}
+            <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                    <h1 className="text-xl font-bold text-gray-900">Tráfego e Engajamento</h1>
+                    <p className="text-xs text-gray-600">Receptivo da campanha</p>
+                </div>
+            </div>
+            {/* Lado Direito: Botão */}
+            <PDFDownloadButton contentRef={contentRef} fileName="trafego-e-engajamento" />
         </div>
       </div>
       
