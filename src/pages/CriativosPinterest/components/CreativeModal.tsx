@@ -60,7 +60,7 @@ const VideoRetentionChart: React.FC<{ creative: CreativeData }> = ({ creative })
   }
 
   // Calcular percentuais de retenção
-  const totalViews = creative.videoViewsPaid || creative.videoStartsPaid
+  const totalViews =  creative.videoStartsPaid
   const retention25 = totalViews > 0 ? (creative.videoViews25Paid / totalViews) * 100 : 0
   const retention50 = totalViews > 0 ? (creative.videoViews50Paid / totalViews) * 100 : 0
   const retention75 = totalViews > 0 ? (creative.videoViews75Paid / totalViews) * 100 : 0

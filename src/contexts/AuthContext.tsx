@@ -51,13 +51,16 @@ const AUTHORIZED_DOMAINS = [
 
 // Função para verificar se o email está autorizado
 const isEmailAuthorized = (email: string): boolean => {
+  // Converte o e-mail do usuário para minúsculas ANTES de checar
+  const lowerCaseEmail = email.toLowerCase();
+
   // Verifica se o email está na lista específica
-  if (AUTHORIZED_EMAILS.includes(email)) {
+  if (AUTHORIZED_EMAILS.includes(lowerCaseEmail)) {
     return true
   }
-  
+
   // Verifica se o domínio do email está autorizado
-  const domain = email.split('@')[1]
+  const domain = lowerCaseEmail.split('@')[1]
   return AUTHORIZED_DOMAINS.includes(domain)
 }
 
