@@ -606,17 +606,17 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-gold-50 to-gold-100 rounded-lg p-3">
+            <div className="bg-gradient-to-br from-brown-50 to-brown-100 rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium text-gold-600">Não Sou Cliente BB</p>
+                  <p className="text-xs font-medium text-brown-600">Não Sou Cliente BB</p>
                   {/*
                     AQUI VOCÊ COLOCA O NÚMERO DE LEITURAS.
                     Basta trocar o número 1500 pelo valor que você quiser.
                   */}
-                  <p className="text-lg font-bold text-gold-900">{formatNumber(4)}</p>
+                  <p className="text-lg font-bold text-brown-900">{formatNumber(4)}</p>
                 </div>
-                <QrCode className="w-6 h-6 text-gold-600" />
+                <QrCode className="w-6 h-6 text-brown-600" />
               </div>
             </div>
 
