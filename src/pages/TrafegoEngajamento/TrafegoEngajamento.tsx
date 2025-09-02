@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useMemo, useRef } from "react"
-import { TrendingUp, Calendar, Users, BarChart3, MessageCircle, Phone, HandHeart, QrCode } from "lucide-react"
+import { TrendingUp, Calendar, Users, BarChart3, MessageCircle, Phone, HandHeart, QrCode, UserX } from "lucide-react"
 import Loading from "../../components/Loading/Loading"
 import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
 import { 
@@ -605,6 +605,22 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
                 <QrCode className="w-6 h-6 text-cyan-600" />
               </div>
             </div>
+
+            <div className="bg-gradient-to-br from-gold-50 to-gold-100 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gold-600">Não Sou Cliente BB</p>
+                  {/*
+                    AQUI VOCÊ COLOCA O NÚMERO DE LEITURAS.
+                    Basta trocar o número 1500 pelo valor que você quiser.
+                  */}
+                  <p className="text-lg font-bold text-gold-900">{formatNumber(4)}</p>
+                </div>
+                <QrCode className="w-6 h-6 text-gold-600" />
+              </div>
+            </div>
+
+
           </div>
         </div>
 
