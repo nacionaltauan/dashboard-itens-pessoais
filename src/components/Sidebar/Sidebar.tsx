@@ -77,6 +77,16 @@ const menuItems: MenuItem[] = [
     ),
   },
   {
+    id: "google-search-keywords",
+    label: "Google Search",
+    path: "/google-search-keywords",
+    icon: (
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5.03,16.42 5.03,12.5C5.03,8.58 8.36,5.73 12.19,5.73C14.02,5.73 15.64,6.37 16.84,7.48L19.09,5.23C17.21,3.48 14.95,2.5 12.19,2.5C6.92,2.5 2.73,6.72 2.73,12.5C2.73,18.28 6.92,22.5 12.19,22.5C17.6,22.5 21.54,18.51 21.54,12.81C21.54,12.23 21.48,11.66 21.35,11.1Z" />
+      </svg>
+    ),
+  },
+  {
     id: "criativos-pinterest",
     label: "Criativos - Pinterest",
     path: "/criativos-pinterest",
