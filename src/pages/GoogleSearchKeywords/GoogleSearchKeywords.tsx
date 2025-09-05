@@ -20,16 +20,117 @@ interface KeywordData {
 // Substituímos o carregamento da API por esta lista de dados.
 // Podes alterar ou adicionar mais linhas conforme necessário.
 const staticKeywordData: KeywordData[] = [
-  { date: "2024-08-01", keyword: "uma mamadinha daquelas", cost: 150.75, impressions: 12000, clicks: 350, ctr: 2.92 },
-  { date: "2024-08-01", keyword: "melhores ténis de corrida", cost: 220.50, impressions: 18500, clicks: 620, ctr: 3.35 },
-  { date: "2024-08-02", keyword: "sapatilhas de couro", cost: 95.20, impressions: 8000, clicks: 180, ctr: 2.25 },
-  { date: "2024-08-02", keyword: "sandálias de verão", cost: 180.00, impressions: 15000, clicks: 450, ctr: 3.00 },
-  { date: "2024-08-03", keyword: "botas de inverno promoção", cost: 310.40, impressions: 25000, clicks: 890, ctr: 3.56 },
-  { date: "2024-08-03", keyword: "calçado infantil barato", cost: 75.60, impressions: 9500, clicks: 210, ctr: 2.21 },
-  { date: "2024-08-04", keyword: "loja de sapatos perto de mim", cost: 110.00, impressions: 11000, clicks: 310, ctr: 2.82 },
-  { date: "2024-08-04", keyword: "sapatos de festa", cost: 190.80, impressions: 16000, clicks: 550, ctr: 3.44 },
-  { date: "2024-08-05", keyword: "chinelos confortáveis", cost: 60.30, impressions: 7000, clicks: 150, ctr: 2.14 },
-  { date: "2024-08-05", keyword: "ténis nike air max", cost: 450.00, impressions: 35000, clicks: 1500, ctr: 4.29 },
+  { date: "2025-08-27", keyword: "seguro celular", impressions: 18, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-27", keyword: "seguro de bolsa", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-27", keyword: "seguros pessoais", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-27", keyword: "seguro de itens pessoais", impressions: 5, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-28", keyword: "itens pessoais", impressions: 6, clicks: 1, ctr: 16.67, cost: 4.5 },
+  { date: "2025-08-28", keyword: "melhor seguro pessoal", impressions: 4, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-28", keyword: "seguro celular", impressions: 1229, clicks: 35, ctr: 2.85, cost: 157.5 },
+  { date: "2025-08-28", keyword: "seguro de bolsa", impressions: 12, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-28", keyword: "seguro de celular casas bahia como funciona", impressions: 2, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-28", keyword: "seguro do celular como funciona", impressions: 6, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-28", keyword: "seguros pessoais", impressions: 140, clicks: 5, ctr: 3.57, cost: 22.5 },
+  { date: "2025-08-28", keyword: "seguro celular", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-28", keyword: "seguro de itens pessoais", impressions: 21, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-28", keyword: "seguro do celular como funciona", impressions: 2, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-29", keyword: "bb seguro itens pessoais", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-29", keyword: "itens pessoais", impressions: 3, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-29", keyword: "melhor seguro pessoal", impressions: 27, clicks: 2, ctr: 7.41, cost: 9 },
+  { date: "2025-08-29", keyword: "seguro celular", impressions: 788, clicks: 24, ctr: 3.05, cost: 108 },
+  { date: "2025-08-29", keyword: "seguro de bolsa", impressions: 7, clicks: 1, ctr: 14.29, cost: 4.5 },
+  { date: "2025-08-29", keyword: "seguro de celular", impressions: 2, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-29", keyword: "seguro de celular contra roubo", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-29", keyword: "seguro de celular da havan", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-29", keyword: "seguro de celular da magazine luiza", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-29", keyword: "seguro de celular do governo", impressions: 46, clicks: 4, ctr: 8.70, cost: 18 },
+  { date: "2025-08-29", keyword: "seguro de celular nubank", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-29", keyword: "seguro do celular", impressions: 6, clicks: 1, ctr: 16.67, cost: 4.5 },
+  { date: "2025-08-29", keyword: "seguro do celular como funciona", impressions: 51, clicks: 2, ctr: 3.92, cost: 9 },
+  { date: "2025-08-29", keyword: "seguro pessoais", impressions: 14, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-29", keyword: "seguros pessoais", impressions: 122, clicks: 1, ctr: 0.82, cost: 4.5 },
+  { date: "2025-08-29", keyword: "seguro de itens pessoais", impressions: 3, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-30", keyword: "bb seguro itens pessoais", impressions: 6, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-30", keyword: "itens pessoais", impressions: 4, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-30", keyword: "melhor seguro pessoal", impressions: 24, clicks: 2, ctr: 8.33, cost: 9 },
+  { date: "2025-08-30", keyword: "seguro celular", impressions: 1203, clicks: 66, ctr: 5.49, cost: 297 },
+  { date: "2025-08-30", keyword: "seguro de bolsa", impressions: 7, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-30", keyword: "seguro de celular", impressions: 5, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-30", keyword: "seguro de celular contra roubo", impressions: 73, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-30", keyword: "seguro de celular da magazine luiza", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-30", keyword: "seguro de celular do governo", impressions: 39, clicks: 4, ctr: 10.26, cost: 18 },
+  { date: "2025-08-30", keyword: "seguro do celular", impressions: 30, clicks: 1, ctr: 3.33, cost: 4.5 },
+  { date: "2025-08-30", keyword: "seguro do celular como funciona", impressions: 38, clicks: 1, ctr: 2.63, cost: 4.5 },
+  { date: "2025-08-30", keyword: "seguro pessoais", impressions: 21, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-30", keyword: "seguros pessoais", impressions: 144, clicks: 21, ctr: 14.58, cost: 94.5 },
+  { date: "2025-08-31", keyword: "bb seguro itens pessoais", impressions: 4, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-31", keyword: "melhor seguro pessoal", impressions: 89, clicks: 12, ctr: 13.48, cost: 54 },
+  { date: "2025-08-31", keyword: "seguro bolsa protegida", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-31", keyword: "seguro celular", impressions: 1456, clicks: 73, ctr: 5.01, cost: 328.5 },
+  { date: "2025-08-31", keyword: "seguro de bolsa", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-31", keyword: "seguro de celular", impressions: 103, clicks: 7, ctr: 6.80, cost: 31.5 },
+  { date: "2025-08-31", keyword: "seguro de celular contra roubo", impressions: 45, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-31", keyword: "seguro de celular do governo", impressions: 9, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-31", keyword: "seguro do celular", impressions: 19, clicks: 3, ctr: 15.79, cost: 13.5 },
+  { date: "2025-08-31", keyword: "seguro do celular como funciona", impressions: 10, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-08-31", keyword: "seguro pessoais", impressions: 11, clicks: 1, ctr: 9.09, cost: 4.5 },
+  { date: "2025-08-31", keyword: "seguros pessoais", impressions: 1981, clicks: 193, ctr: 9.74, cost: 868.5 },
+  { date: "2025-09-01", keyword: "bb seguro itens pessoais", impressions: 21, clicks: 1, ctr: 4.76, cost: 4.5 },
+  { date: "2025-09-01", keyword: "itens pessoais", impressions: 2, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-01", keyword: "melhor seguro pessoal", impressions: 1023, clicks: 121, ctr: 11.83, cost: 544.5 },
+  { date: "2025-09-01", keyword: "seguro bolsa protegida", impressions: 10, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-01", keyword: "seguro celular", impressions: 727, clicks: 54, ctr: 7.43, cost: 243 },
+  { date: "2025-09-01", keyword: "seguro contra roubo", impressions: 43, clicks: 7, ctr: 16.28, cost: 31.5 },
+  { date: "2025-09-01", keyword: "seguro de bolsa", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-01", keyword: "seguro de celular", impressions: 53, clicks: 7, ctr: 13.21, cost: 31.5 },
+  { date: "2025-09-01", keyword: "seguro de celular contra roubo", impressions: 53, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-01", keyword: "seguro de celular do governo", impressions: 20, clicks: 3, ctr: 15.00, cost: 13.5 },
+  { date: "2025-09-01", keyword: "seguro de roubo de celular", impressions: 11, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-01", keyword: "seguro do celular", impressions: 270, clicks: 60, ctr: 22.22, cost: 270 },
+  { date: "2025-09-01", keyword: "seguro do celular como funciona", impressions: 27, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-01", keyword: "seguro pessoais", impressions: 18, clicks: 1, ctr: 5.56, cost: 4.5 },
+  { date: "2025-09-01", keyword: "seguros pessoais", impressions: 1137, clicks: 153, ctr: 13.46, cost: 688.5 },
+  { date: "2025-09-02", keyword: "bb seguro itens pessoais", impressions: 2, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-02", keyword: "melhor seguro pessoal", impressions: 812, clicks: 96, ctr: 11.82, cost: 432 },
+  { date: "2025-09-02", keyword: "seguro bolsa protegida", impressions: 10, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-02", keyword: "seguro celular", impressions: 479, clicks: 35, ctr: 7.31, cost: 157.5 },
+  { date: "2025-09-02", keyword: "seguro contra roubo", impressions: 42, clicks: 7, ctr: 16.67, cost: 31.5 },
+  { date: "2025-09-02", keyword: "seguro de celular", impressions: 68, clicks: 16, ctr: 23.53, cost: 72 },
+  { date: "2025-09-02", keyword: "seguro de celular contra roubo", impressions: 17, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-02", keyword: "seguro de celular do governo", impressions: 13, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-02", keyword: "seguro de roubo de celular", impressions: 34, clicks: 3, ctr: 8.82, cost: 13.5 },
+  { date: "2025-09-02", keyword: "seguro do celular", impressions: 33, clicks: 5, ctr: 15.15, cost: 22.5 },
+  { date: "2025-09-02", keyword: "seguro do celular como funciona", impressions: 11, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-02", keyword: "seguro pessoais", impressions: 16, clicks: 3, ctr: 18.75, cost: 13.5 },
+  { date: "2025-09-02", keyword: "seguros pessoais", impressions: 510, clicks: 39, ctr: 7.65, cost: 175.5 },
+  { date: "2025-09-03", keyword: "bb seguro itens pessoais", impressions: 10, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-03", keyword: "melhor seguro pessoal", impressions: 448, clicks: 42, ctr: 9.38, cost: 189 },
+  { date: "2025-09-03", keyword: "seguro bolsa protegida", impressions: 2, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-03", keyword: "seguro celular", impressions: 223, clicks: 15, ctr: 6.73, cost: 67.5 },
+  { date: "2025-09-03", keyword: "seguro contra roubo", impressions: 21, clicks: 1, ctr: 4.76, cost: 4.5 },
+  { date: "2025-09-03", keyword: "seguro de celular", impressions: 4, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-03", keyword: "seguro de celular contra roubo", impressions: 14, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-03", keyword: "seguro de celular do governo", impressions: 12, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-03", keyword: "seguro de roubo de celular", impressions: 114, clicks: 8, ctr: 7.02, cost: 36 },
+  { date: "2025-09-03", keyword: "seguro do celular", impressions: 80, clicks: 3, ctr: 3.75, cost: 13.5 },
+  { date: "2025-09-03", keyword: "seguro do celular como funciona", impressions: 16, clicks: 2, ctr: 12.50, cost: 9 },
+  { date: "2025-09-03", keyword: "seguro pessoais", impressions: 6, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-03", keyword: "seguros pessoais", impressions: 616, clicks: 55, ctr: 8.93, cost: 247.5 },
+  { date: "2025-09-04", keyword: "bb seguro itens pessoais", impressions: 5, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-04", keyword: "melhor seguro pessoal", impressions: 223, clicks: 12, ctr: 5.38, cost: 54 },
+  { date: "2025-09-04", keyword: "seguro bolsa protegida", impressions: 2, clicks: 1, ctr: 50.00, cost: 4.5 },
+  { date: "2025-09-04", keyword: "seguro cartao", impressions: 1, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-04", keyword: "seguro celular", impressions: 159, clicks: 5, ctr: 3.14, cost: 22.5 },
+  { date: "2025-09-04", keyword: "seguro contra roubo", impressions: 16, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-04", keyword: "seguro de celular", impressions: 32, clicks: 1, ctr: 3.13, cost: 4.5 },
+  { date: "2025-09-04", keyword: "seguro de celular contra roubo", impressions: 19, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-04", keyword: "seguro de celular do governo", impressions: 3, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-04", keyword: "seguro de celular para iphone", impressions: 2, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-04", keyword: "seguro de roubo de celular", impressions: 35, clicks: 3, ctr: 8.57, cost: 13.5 },
+  { date: "2025-09-04", keyword: "seguro do celular", impressions: 22, clicks: 1, ctr: 4.55, cost: 4.5 },
+  { date: "2025-09-04", keyword: "seguro do celular como funciona", impressions: 11, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-04", keyword: "seguro pessoais", impressions: 16, clicks: 0, ctr: 0, cost: 0 },
+  { date: "2025-09-04", keyword: "seguros pessoais", impressions: 321, clicks: 47, ctr: 14.64, cost: 211.5 },
   // Adiciona mais dados aqui se precisares
 ]
 
@@ -46,26 +147,57 @@ const GoogleSearchKeywords: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
 
-  // Memoização para filtrar os dados com base no período selecionado
-  const filteredData = useMemo(() => {
-    let filtered = processedData
+// Memoização para filtrar E AGREGAR os dados
+const filteredData = useMemo(() => {
+  let filtered = processedData;
 
-    if (dateRange.start && dateRange.end) {
-      filtered = filtered.filter((item) => {
-        const itemDate = new Date(item.date)
-        const startDate = new Date(dateRange.start)
-        const endDate = new Date(dateRange.end)
-        // Adiciona um dia ao endDate para incluir o dia final completo
-        endDate.setDate(endDate.getDate() + 1)
-        return itemDate >= startDate && itemDate < endDate
-      })
+  // 1. Filtragem por data (lógica mantida)
+  if (dateRange.start && dateRange.end) {
+    filtered = filtered.filter((item) => {
+      const itemDate = new Date(item.date);
+      const startDate = new Date(dateRange.start);
+      const endDate = new Date(dateRange.end);
+      endDate.setDate(endDate.getDate() + 1); // Incluir o dia final
+      return itemDate >= startDate && itemDate < endDate;
+    });
+  }
+
+  // 2. Agrupamento dos dados por palavra-chave
+  const groupedData: Record<string, { cost: number; impressions: number; clicks: number }> = {};
+
+  filtered.forEach((item) => {
+    // Se a palavra-chave ainda não estiver no nosso objeto de grupo, inicializa-a
+    if (!groupedData[item.keyword]) {
+      groupedData[item.keyword] = {
+        cost: 0,
+        impressions: 0,
+        clicks: 0,
+      };
     }
-    
-    // Ordena os dados por custo, do maior para o menor
-    filtered.sort((a, b) => b.cost - a.cost)
+    // Soma os valores
+    groupedData[item.keyword].cost += item.cost;
+    groupedData[item.keyword].impressions += item.impressions;
+    groupedData[item.keyword].clicks += item.clicks;
+  });
 
-    return filtered
-  }, [processedData, dateRange])
+  // 3. Transformação do objeto agrupado num array e cálculo do CTR
+  const finalData = Object.keys(groupedData).map((keyword) => {
+    const data = groupedData[keyword];
+    return {
+      keyword: keyword,
+      cost: data.cost,
+      impressions: data.impressions,
+      clicks: data.clicks,
+      // Recalcula o CTR com base nos totais
+      ctr: data.impressions > 0 ? (data.clicks / data.impressions) * 100 : 0,
+    };
+  });
+
+    // Ordena os dados por custo, do maior para o menor
+    finalData.sort((a, b) => b.cost - a.cost);
+
+    return finalData;
+  }, [processedData, dateRange]);
 
   // Memoização para paginar os dados filtrados
   const paginatedData = useMemo(() => {
@@ -183,23 +315,25 @@ const GoogleSearchKeywords: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
+              {/* Cabeçalho da tabela modificado */}
               <tr className="bg-blue-600 text-white">
-                <th className="text-left py-3 px-4 font-semibold">Date</th>
-                <th className="text-left py-3 px-4 font-semibold">Keyword</th>
-                <th className="text-right py-3 px-4 font-semibold">Cost</th>
-                <th className="text-right py-3 px-4 font-semibold">Impressions</th>
-                <th className="text-right py-3 px-4 font-semibold">Clicks</th>
+                <th className="text-left py-3 px-4 font-semibold">Palavras-chave</th>
+                <th className="text-right py-3 px-4 font-semibold">Investimento</th>
+                <th className="text-right py-3 px-4 font-semibold">Impressões</th>
+                <th className="text-right py-3 px-4 font-semibold">Cliques</th>
                 <th className="text-right py-3 px-4 font-semibold">CTR</th>
               </tr>
             </thead>
             <tbody>
+              {/* Corpo da tabela modificado */}
               {paginatedData.map((keyword, index) => (
                 <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
-                  <td className="py-3 px-4 text-sm">{new Date(keyword.date).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
+                  {/* Célula da data removida */}
                   <td className="py-3 px-4 font-medium text-gray-900 text-sm">{keyword.keyword}</td>
                   <td className="py-3 px-4 text-right font-semibold">{formatCurrency(keyword.cost)}</td>
                   <td className="py-3 px-4 text-right">{formatNumber(keyword.impressions)}</td>
                   <td className="py-3 px-4 text-right">{formatNumber(keyword.clicks)}</td>
+                  {/* O CTR agora vem do novo cálculo */}
                   <td className="py-3 px-4 text-right">{keyword.ctr.toFixed(2)}%</td>
                 </tr>
               ))}
