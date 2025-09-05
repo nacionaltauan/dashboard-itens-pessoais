@@ -73,15 +73,6 @@ const VisaoGeral: React.FC = () => {
     Default: "#6366f1",
   }
 
-  // Placeholder para dados de benchmark
-  const benchmarkMetrics = {
-    cpm: 14.16, // R$ 5,00
-    cpc: 1.14, // R$ 0,80
-    cpv: 0.1, // R$ 0,05 (Custo por Visualização de Vídeo - placeholder)
-    ctr: 0.55, // 1.5%
-    vtr: 6.34, // 70% (View-Through Rate - placeholder)
-  }
-
   // Valores previstos para pacing
   const impressoesPrevistas = 51241352;
   const cliquesPrevistos = 258138;
@@ -259,10 +250,8 @@ const VisaoGeral: React.FC = () => {
   const totals = useMemo(() => {
     const investment = filteredData.reduce((sum, item) => sum + item.cost, 0)
     const impressions = filteredData.reduce((sum, item) => sum + item.impressions, 0)
-    // Corrected: Sum the reach values instead of taking the maximum
     const reach = filteredData.reduce((sum, item) => sum + item.reach, 0)
     const clicks = filteredData.reduce((sum, item) => sum + item.clicks, 0)
-    // Corrected: Calculate overall frequency as total impressions / total reach
     const frequency = reach > 0 ? impressions / reach : 0
     const cpm = impressions > 0 ? investment / (impressions / 1000) : 0
     const cpc = clicks > 0 ? investment / clicks : 0
@@ -401,31 +390,6 @@ const VisaoGeral: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
-      </div>
-    )
-  }
-
-  // Componente para exibir métrica comparativa
-  const MetricComparison: React.FC<{
-    label: string
-    value: number
-    benchmark: number
-    format: (val: number) => string
-    isHigherBetter: boolean
-  }> = ({ label, value, benchmark, format, isHigherBetter }) => {
-    const isBetter = isHigherBetter ? value >= benchmark : value <= benchmark
-    const colorClass = isBetter ? "text-green-600" : "text-red-600"
-    const arrowIcon = isBetter ? "↑" : "↓"
-
-    return (
-      <div className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-        <span className="text-sm text-gray-700">{label}</span>
-        <div className="flex items-center space-x-2">
-          <span className={`text-sm font-medium ${colorClass}`}>{format(value)}</span>
-          <span className="text-xs text-gray-500">
-            ({format(benchmark)} {arrowIcon})
-          </span>
         </div>
       </div>
     )
@@ -606,47 +570,6 @@ const VisaoGeral: React.FC = () => {
           <HorizontalBarChart data={clicksChartData} title="Cliques" />
         </div>
 
-        {/* Quadro Comparativo de Métricas com Benchmark */}
-        <div className="card-overlay rounded-lg shadow-lg p-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Comparativo com Benchmark</h4>
-          <div className="space-y-1">
-            <MetricComparison
-              label="CPM"
-              value={totals.cpm}
-              benchmark={benchmarkMetrics.cpm}
-              format={(val) => `R$ ${val.toFixed(2)}`}
-              isHigherBetter={false}
-            />
-            <MetricComparison
-              label="CPC"
-              value={totals.cpc}
-              benchmark={benchmarkMetrics.cpc}
-              format={(val) => `R$ ${val.toFixed(2)}`}
-              isHigherBetter={false}
-            />
-            <MetricComparison
-              label="CPV"
-              value={totals.cpv}
-              benchmark={benchmarkMetrics.cpv}
-              format={(val) => `R$ ${val.toFixed(2)}`}
-              isHigherBetter={false}
-            />
-            <MetricComparison
-              label="CTR"
-              value={totals.ctr}
-              benchmark={benchmarkMetrics.ctr}
-              format={(val) => `${val.toFixed(2)}%`}
-              isHigherBetter={true}
-            />
-            <MetricComparison
-              label="VTR"
-              value={totals.vtr}
-              benchmark={benchmarkMetrics.vtr}
-              format={(val) => `${val.toFixed(2)}%`}
-              isHigherBetter={true}
-            />
-          </div>
-        </div>
       </div>
     </div>
   )
