@@ -46,11 +46,14 @@ const CriativosTikTok: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   
-  // Mudança principal: usar novo tipo de dados para mídias
+  // 1. GERENCIAMENTO DE ESTADO DO FILTRO
+  // Adicionado estado para controlar o filtro de categoria ativo.
+  // O valor inicial é 'geral', exibindo todos os criativos.
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState('geral'); // 'geral', 'influenciadores', 'campanhaRegular'
+
   const [creativeMedias, setCreativeMedias] = useState<Map<string, { url: string, type: string }>>(new Map())
   const [mediasLoading, setMediasLoading] = useState(false)
 
-  // Estados do modal
   const [selectedCreative, setSelectedCreative] = useState<CreativeData | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -133,15 +136,19 @@ const CriativosTikTok: React.FC = () => {
 
     const allDates = processed.map((i) => new Date(i.date)).sort((a, b) => a.getTime() - b.getTime())
 
-    setDateRange({
-      start: allDates[0].toISOString().slice(0, 10),
-      end: allDates[allDates.length - 1].toISOString().slice(0, 10),
-    })
+    if (allDates.length > 0) {
+      setDateRange({
+        start: allDates[0].toISOString().slice(0, 10),
+        end: allDates[allDates.length - 1].toISOString().slice(0, 10),
+      })
+    }
   }, [apiData])
 
+  // 3. ATUALIZAÇÃO DA LÓGICA DE FILTRAGEM
   const filteredData = useMemo(() => {
     let filtered = processedData
 
+    // Filtro por data (lógica existente)
     if (dateRange.start && dateRange.end) {
       filtered = filtered.filter((item) => {
         const itemDate = new Date(item.date)
@@ -151,12 +158,27 @@ const CriativosTikTok: React.FC = () => {
       })
     }
 
+    // Lógica de filtragem por categoria (nova implementação)
+    const influencerTerms = ["INFLUENCIADOR-MATHEUS", "INFLU-CAROL", "NC00069", "SMART-CREATIVE_001"];
+
+    if (activeCategoryFilter === 'influenciadores') {
+      filtered = filtered.filter(item => 
+        influencerTerms.some(term => item.adName.includes(term))
+      );
+    } else if (activeCategoryFilter === 'campanhaRegular') {
+      filtered = filtered.filter(item => 
+        !influencerTerms.some(term => item.adName.includes(term))
+      );
+    }
+    // Se 'geral', nenhuma filtragem adicional é aplicada aqui.
+
     const groupedData: Record<string, CreativeData> = {}
     filtered.forEach((item) => {
       const key = `${item.adName}_${item.videoThumbnailUrl || "no-thumbnail"}`
       if (!groupedData[key]) {
         groupedData[key] = { ...item }
       } else {
+        // Agrupamento de métricas (lógica existente)
         groupedData[key].impressions += item.impressions
         groupedData[key].clicks += item.clicks
         groupedData[key].cost += item.cost
@@ -186,7 +208,7 @@ const CriativosTikTok: React.FC = () => {
     finalData.sort((a, b) => b.cost - a.cost)
 
     return finalData
-  }, [processedData, dateRange])
+  }, [processedData, dateRange, activeCategoryFilter]) // Adicionado activeCategoryFilter como dependência
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
@@ -238,12 +260,9 @@ const CriativosTikTok: React.FC = () => {
     })
   }
 
-  // Função para abrir o modal
   const openCreativeModal = (creative: CreativeData) => {
-    // Buscar URL da mídia do Google Drive
     const driveMediaData = googleDriveApi.findMediaForCreative(creative.adName, creativeMedias)
     
-    // Criar objeto com mediaUrl para o modal
     const creativeWithMedia = {
       ...creative,
       mediaUrl: driveMediaData?.url || creative.videoThumbnailUrl || undefined
@@ -319,10 +338,43 @@ const CriativosTikTok: React.FC = () => {
             </div>
           </div>
 
+          {/* 2. MODIFICAÇÃO DA INTERFACE (JSX) */}
+          {/* O div antigo foi substituído por este novo bloco com os botões de filtro. */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Total de Criativos</label>
-            <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm text-gray-600">
-              {filteredData.length} criativos encontrados
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Influenciadores/Campanha
+            </label>
+            <div className="flex space-x-2 bg-gray-50 border border-gray-300 rounded-md p-1">
+              <button
+                onClick={() => setActiveCategoryFilter('geral')}
+                className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors duration-200 ${
+                  activeCategoryFilter === 'geral'
+                    ? 'bg-pink-600 text-white shadow-sm'
+                    : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Geral
+              </button>
+              <button
+                onClick={() => setActiveCategoryFilter('influenciadores')}
+                className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors duration-200 ${
+                  activeCategoryFilter === 'influenciadores'
+                    ? 'bg-pink-600 text-white shadow-sm'
+                    : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Influenciadores
+              </button>
+              <button
+                onClick={() => setActiveCategoryFilter('campanhaRegular')}
+                className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors duration-200 ${
+                  activeCategoryFilter === 'campanhaRegular'
+                    ? 'bg-pink-600 text-white shadow-sm'
+                    : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Campanha Regular
+              </button>
             </div>
           </div>
         </div>
@@ -364,8 +416,6 @@ const CriativosTikTok: React.FC = () => {
             <tbody>
               {paginatedData.map((creative, index) => {
                 const vtr = creative.impressions > 0 ? (creative.videoViews100 / creative.impressions) * 100 : 0
-
-                // Buscar mídia do Google Drive primeiro, depois usar thumbnail do TikTok
                 const driveMediaData = googleDriveApi.findMediaForCreative(creative.adName, creativeMedias)
                 const tiktokThumbnail = creative.videoThumbnailUrl
 
@@ -474,7 +524,6 @@ const CriativosTikTok: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal do Criativo */}
       <TikTokCreativeModal 
         creative={selectedCreative}
         isOpen={isModalOpen}
