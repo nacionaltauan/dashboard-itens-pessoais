@@ -194,7 +194,7 @@ const GoogleSearchKeywords: React.FC = () => {
   const [processedData] = useState<KeywordData[]>(staticKeywordData)
   
   // Estado para o intervalo de datas do filtro
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "2025-08-27", end: "2025-09-04" });
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "2025-08-27", end: "2025-09-08" });
   
   // Estado para a paginação da tabela
   const [currentPage, setCurrentPage] = useState(1)
