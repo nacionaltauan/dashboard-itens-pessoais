@@ -808,7 +808,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
             </div>
             <div className="text-right">
               <span className="text-3xl font-bold text-gray-900">
-                {formatNumber(7946)}
+                {formatNumber(8120)}
               </span>
             </div>
           </div>
