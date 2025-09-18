@@ -47,7 +47,6 @@ const AUTHORIZED_DOMAINS = [
   "naccom.com.br",
   "bb.com.br",
   "brasilseg.com.br",
-  "gmail.com"
 
 ]
 
