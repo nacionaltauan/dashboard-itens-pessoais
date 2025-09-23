@@ -5,8 +5,8 @@ import { apiNacional } from "../../services/api"
 import Loading from "../../components/Loading/Loading"
 import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
 import { googleDriveApi } from "../../services/googleDriveApi"
-import MediaThumbnail from "../../components/MediaThumbnail/MediaThumbnail" // Importe o novo componente
-import MetaCreativeModal from "./components/MetaCreativeModal" // Importe o modal
+import MediaThumbnail from "../../components/MediaThumbnail/MediaThumbnail"
+import MetaCreativeModal from "./components/MetaCreativeModal"
 
 interface CreativeData {
   date: string
@@ -63,15 +63,18 @@ const CriativosMeta: FC = () => {
   const [processedData, setProcessedData] = useState<CreativeData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [selectedPraca, setSelectedPraca] = useState<string>("")
+  
+  // 1. GERENCIAMENTO DE ESTADO DO FILTRO
+  // Adicionado estado para controlar o filtro de categoria.
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState('geral'); // 'geral', 'influenciadores', 'campanhaRegular'
+  
   const [availablePracas, setAvailablePracas] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   
-  // Mudança principal: usar novo tipo de dados para mídias
   const [creativeMedias, setCreativeMedias] = useState<Map<string, { url: string, type: string }>>(new Map())
   const [mediasLoading, setMediasLoading] = useState(false)
 
-  // Estados do modal
   const [selectedCreative, setSelectedCreative] = useState<CreativeData | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -123,7 +126,6 @@ const CriativosMeta: FC = () => {
           const videoStarts = parseInteger(row[headers.indexOf("Video starts")])
           const totalEngagements = parseInteger(row[headers.indexOf("Total engagements")])
 
-          // Calcular métricas derivadas
           const cpm = impressions > 0 ? totalSpent / (impressions / 1000) : 0
           const cpc = clicks > 0 ? totalSpent / clicks : 0
           const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0
@@ -154,11 +156,9 @@ const CriativosMeta: FC = () => {
 
       setProcessedData(processed)
 
-      // Definir range de datas inicial
       if (processed.length > 0) {
         const dates = processed
           .map((item) => {
-            // Converter formato dd/mm/yyyy para yyyy-mm-dd
             const dateParts = item.date.split("/")
             if (dateParts.length === 3) {
               return new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`)
@@ -172,11 +172,9 @@ const CriativosMeta: FC = () => {
         setDateRange({ start: startDate, end: endDate })
       }
 
-      // Extrair praças únicas dos nomes das campanhas
       const pracaSet = new Set<string>()
       processed.forEach((item) => {
         if (item.campaignName) {
-          // Regex para capturar diferentes padrões de praça
           const match = item.campaignName.match(/(?:BSE-\d+_)?([A-Z]{2,3})(?:_|$)/)
           if (match && match[1] && match[1] !== "BSE") {
             pracaSet.add(match[1])
@@ -188,14 +186,13 @@ const CriativosMeta: FC = () => {
     }
   }, [apiData])
 
-  // Filtrar dados
+  // 3. ATUALIZAÇÃO DA LÓGICA DE FILTRAGEM
   const filteredData = useMemo(() => {
     let filtered = processedData
 
     // Filtro por período
     if (dateRange.start && dateRange.end) {
       filtered = filtered.filter((item) => {
-        // Converter formato dd/mm/yyyy para Date
         const dateParts = item.date.split("/")
         let itemDate: Date
         if (dateParts.length === 3) {
@@ -218,6 +215,20 @@ const CriativosMeta: FC = () => {
       })
     }
 
+    // Nova lógica de filtragem por categoria
+    const influencerTerms = ["INFLUENCIADORA_CAROL"];
+
+    if (activeCategoryFilter === 'influenciadores') {
+      filtered = filtered.filter(item => 
+        influencerTerms.some(term => item.creativeTitle.includes(term))
+      );
+    } else if (activeCategoryFilter === 'campanhaRegular') {
+      filtered = filtered.filter(item => 
+        !influencerTerms.some(term => item.creativeTitle.includes(term))
+      );
+    }
+    // Se 'geral', a variável 'filtered' segue sem modificação.
+
     // Agrupar por criativo APÓS a filtragem
     const groupedData: Record<string, CreativeData> = {}
     filtered.forEach((item) => {
@@ -239,7 +250,6 @@ const CriativosMeta: FC = () => {
       }
     })
 
-    // Recalcular métricas derivadas
     const finalData = Object.values(groupedData).map((item) => ({
       ...item,
       cpm: item.impressions > 0 ? item.totalSpent / (item.impressions / 1000) : 0,
@@ -248,13 +258,11 @@ const CriativosMeta: FC = () => {
       frequency: item.reach > 0 ? item.impressions / item.reach : 0,
     }))
 
-    // Ordenar por investimento (totalSpent) decrescente
     finalData.sort((a, b) => b.totalSpent - a.totalSpent)
 
     return finalData
-  }, [processedData, selectedPraca, dateRange])
+  }, [processedData, selectedPraca, dateRange, activeCategoryFilter]) // Adicionada dependência
 
-  // Paginação
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
     const endIndex = startIndex + itemsPerPage
@@ -263,7 +271,6 @@ const CriativosMeta: FC = () => {
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
 
-  // Calcular totais
   const totals = useMemo(() => {
     return {
       investment: filteredData.reduce((sum, item) => sum + item.totalSpent, 0),
@@ -279,7 +286,6 @@ const CriativosMeta: FC = () => {
     }
   }, [filteredData])
 
-  // Calcular médias
   if (filteredData.length > 0) {
     totals.avgCpm = totals.impressions > 0 ? totals.investment / (totals.impressions / 1000) : 0
     totals.avgCpc = totals.clicks > 0 ? totals.investment / totals.clicks : 0
@@ -287,7 +293,6 @@ const CriativosMeta: FC = () => {
     totals.ctr = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0
   }
 
-  // Função para formatar números
   const formatNumber = (value: number): string => {
     if (value >= 1000000) {
       return `${(value / 1000000).toFixed(1)}M`
@@ -298,7 +303,6 @@ const CriativosMeta: FC = () => {
     return value.toLocaleString("pt-BR")
   }
 
-  // Função para formatar moeda
   const formatCurrency = (value: number): string => {
     return value.toLocaleString("pt-BR", {
       style: "currency",
@@ -306,7 +310,6 @@ const CriativosMeta: FC = () => {
     })
   }
 
-  // Função para mapear códigos de praça para nomes de cidade
   const getPracaName = (codigo: string): string => {
     const pracaMap: Record<string, string> = {
       BSB: "Brasília",
@@ -320,12 +323,9 @@ const CriativosMeta: FC = () => {
     return pracaMap[codigo] || codigo
   }
 
-  // Função para abrir o modal
   const openCreativeModal = (creative: CreativeData) => {
-    // Buscar URL da mídia do Google Drive
     const mediaData = googleDriveApi.findMediaForCreative(creative.creativeTitle, creativeMedias)
     
-    // Criar objeto com mediaUrl para o modal
     const creativeWithMedia = {
       ...creative,
       mediaUrl: mediaData?.url || undefined
@@ -354,7 +354,6 @@ const CriativosMeta: FC = () => {
 
   return (
     <div ref={contentRef} className="space-y-6 h-full flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -384,10 +383,8 @@ const CriativosMeta: FC = () => {
         </div>
       </div>
 
-      {/* Filtros */}
       <div className="card-overlay rounded-lg shadow-lg p-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Filtro de Data */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
               <Calendar className="w-4 h-4 mr-2" />
@@ -409,7 +406,6 @@ const CriativosMeta: FC = () => {
             </div>
           </div>
 
-          {/* Filtro de Praça */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Praça</label>
             <select
@@ -426,18 +422,50 @@ const CriativosMeta: FC = () => {
             </select>
           </div>
 
-          {/* Informações adicionais */}
+          {/* 2. MODIFICAÇÃO DA INTERFACE (JSX) */}
+          {/* O div "Total de Criativos" foi substituído por este bloco. */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Total de Criativos</label>
-            <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm text-gray-600">
-              {filteredData.length} criativos encontrados
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Influenciadores/Campanha
+            </label>
+            <div className="flex space-x-2 bg-gray-50 border border-gray-300 rounded-md p-1">
+              <button
+                onClick={() => setActiveCategoryFilter('geral')}
+                className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors duration-200 ${
+                  activeCategoryFilter === 'geral'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Geral
+              </button>
+              <button
+                onClick={() => setActiveCategoryFilter('influenciadores')}
+                className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors duration-200 ${
+                  activeCategoryFilter === 'influenciadores'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Influenciadores
+              </button>
+              <button
+                onClick={() => setActiveCategoryFilter('campanhaRegular')}
+                className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors duration-200 ${
+                  activeCategoryFilter === 'campanhaRegular'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-transparent text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Campanha Regular
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Métricas Principais */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+        {/* ... (Métricas Principais sem alteração) ... */}
         <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
           <div className="text-sm text-gray-600 mb-1">Investimento</div>
           <div className="text-lg font-bold text-gray-900">{formatCurrency(totals.investment)}</div>
@@ -479,7 +507,6 @@ const CriativosMeta: FC = () => {
         </div>
       </div>
 
-      {/* Tabela de Criativos */}
       <div className="flex-1 card-overlay rounded-lg shadow-lg p-6">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -539,7 +566,6 @@ const CriativosMeta: FC = () => {
           </table>
         </div>
 
-        {/* Paginação */}
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-gray-500">
             Mostrando {(currentPage - 1) * itemsPerPage + 1} -{" "}
@@ -567,7 +593,6 @@ const CriativosMeta: FC = () => {
         </div>
       </div>
 
-      {/* Modal do Criativo */}
       <MetaCreativeModal 
         creative={selectedCreative}
         isOpen={isModalOpen}
