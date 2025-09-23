@@ -97,7 +97,7 @@ export const fetchResumoData = async () => {
 export const fetchEstrategiaOnlineData = async () => {
   try {
     const response = await apiNacional.get(
-      "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Resumo",
+      "/google/sheets/1Vb24X8JB1nVEEnEoPyi9ZgMlTafVr46XBv1IBnN7z1E/data?range=Resumo",
     )
     return response.data
   } catch (error) {
