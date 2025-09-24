@@ -107,15 +107,15 @@ const EstrategiaOnline: React.FC = () => {
 
       const processed: VehicleData[] = rows
         .map((row: any[]) => {
-          const custoInvestido = parseMonetaryValue(row[headers.indexOf("Custo Investido")])
-          const custoPrevisto = parseMonetaryValue(row[headers.indexOf("Custo Previsto")])
+          const custoInvestido = parseMonetaryValue(row[2]) // Coluna "Custo Investido"
+          const custoPrevisto = parseMonetaryValue(row[3]) // Coluna "Custo Previsto"
 
           return {
-            veiculo: row[headers.indexOf("Veículo")] || "",
-            mes: row[headers.indexOf("MÊS")] || "",
+            veiculo: row[0] || "", // Primeira coluna (Veículo)
+            mes: row[1] || "", // Segunda coluna (MÊS)
             custoInvestido,
             custoPrevisto,
-            tipoCompra: row[headers.indexOf("Tipo de Compra")] || "",
+            tipoCompra: row[4] || "", // Quinta coluna (Tipo de Compra)
           }
         })
         .filter((vehicle: VehicleData) => vehicle.veiculo && vehicle.mes)
