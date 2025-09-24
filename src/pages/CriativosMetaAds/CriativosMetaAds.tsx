@@ -62,13 +62,11 @@ const CriativosMeta: FC = () => {
   const { data: apiData, loading, error } = useMetaTratadoData()
   const [processedData, setProcessedData] = useState<CreativeData[]>([])
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
-  const [selectedPraca, setSelectedPraca] = useState<string>("")
   
   // 1. GERENCIAMENTO DE ESTADO DO FILTRO
   // Adicionado estado para controlar o filtro de categoria.
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('geral'); // 'geral', 'influenciadores', 'campanhaRegular'
   
-  const [availablePracas, setAvailablePracas] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   
@@ -171,18 +169,6 @@ const CriativosMeta: FC = () => {
         const endDate = dates[dates.length - 1].toISOString().split("T")[0]
         setDateRange({ start: startDate, end: endDate })
       }
-
-      const pracaSet = new Set<string>()
-      processed.forEach((item) => {
-        if (item.campaignName) {
-          const match = item.campaignName.match(/(?:BSE-\d+_)?([A-Z]{2,3})(?:_|$)/)
-          if (match && match[1] && match[1] !== "BSE") {
-            pracaSet.add(match[1])
-          }
-        }
-      })
-      const pracas = Array.from(pracaSet).filter(Boolean).sort()
-      setAvailablePracas(pracas)
     }
   }, [apiData])
 
@@ -204,14 +190,6 @@ const CriativosMeta: FC = () => {
         const startDate = new Date(dateRange.start)
         const endDate = new Date(dateRange.end)
         return itemDate >= startDate && itemDate <= endDate
-      })
-    }
-
-    // Filtro por praça
-    if (selectedPraca) {
-      filtered = filtered.filter((item) => {
-        const match = item.campaignName.match(/(?:BSE-\d+_)?([A-Z]{2,3})(?:_|$)/)
-        return match && match[1] === selectedPraca
       })
     }
 
@@ -261,7 +239,7 @@ const CriativosMeta: FC = () => {
     finalData.sort((a, b) => b.totalSpent - a.totalSpent)
 
     return finalData
-  }, [processedData, selectedPraca, dateRange, activeCategoryFilter]) // Adicionada dependência
+  }, [processedData, dateRange, activeCategoryFilter]) // Removida dependência selectedPraca
 
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
@@ -308,19 +286,6 @@ const CriativosMeta: FC = () => {
       style: "currency",
       currency: "BRL",
     })
-  }
-
-  const getPracaName = (codigo: string): string => {
-    const pracaMap: Record<string, string> = {
-      BSB: "Brasília",
-      BH: "Belo Horizonte",
-      RJ: "Rio de Janeiro",
-      SP: "São Paulo",
-      SSA: "Salvador",
-      SAO: "São Paulo",
-      NACIONAL: "Nacional",
-    }
-    return pracaMap[codigo] || codigo
   }
 
   const openCreativeModal = (creative: CreativeData) => {
@@ -384,7 +349,7 @@ const CriativosMeta: FC = () => {
       </div>
 
       <div className="card-overlay rounded-lg shadow-lg p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
               <Calendar className="w-4 h-4 mr-2" />
@@ -406,24 +371,6 @@ const CriativosMeta: FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Praça</label>
-            <select
-              value={selectedPraca}
-              onChange={(e) => setSelectedPraca(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            >
-              <option value="">Todas as praças</option>
-              {availablePracas.map((praca) => (
-                <option key={praca} value={praca}>
-                  {getPracaName(praca)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 2. MODIFICAÇÃO DA INTERFACE (JSX) */}
-          {/* O div "Total de Criativos" foi substituído por este bloco. */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Influenciadores/Campanha
@@ -465,7 +412,6 @@ const CriativosMeta: FC = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-        {/* ... (Métricas Principais sem alteração) ... */}
         <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
           <div className="text-sm text-gray-600 mb-1">Investimento</div>
           <div className="text-lg font-bold text-gray-900">{formatCurrency(totals.investment)}</div>
