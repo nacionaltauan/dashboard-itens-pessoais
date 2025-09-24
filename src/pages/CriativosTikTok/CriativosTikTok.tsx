@@ -159,7 +159,7 @@ const CriativosTikTok: React.FC = () => {
     }
 
     // Lógica de filtragem por categoria (nova implementação)
-    const influencerTerms = ["INFLUENCIADOR-MATHEUS", "INFLU-CAROL", "NC00069", "SMART-CREATIVE_001"];
+    const influencerTerms = ["INFLUENCIADOR-MATHEUS", "INFLU-CAROL", "NC00069", "SMART-CREATIVE_001","INFLUENCIADOR HENRI"];
 
     if (activeCategoryFilter === 'influenciadores') {
       filtered = filtered.filter(item => 
