@@ -4,9 +4,9 @@ import React, { useCallback, useEffect, useState } from "react"
 import axios from "axios"
 
 const API_BASE_URL = "https://api-google-sheets-7zph.vercel.app"
-const API_NACIONAL_URL = "https://nacional-api-gray.vercel.app"
+const API_NACIONAL_URL = "https://api-nacional.vercel.app"
 
-export const API_NACIONAL_URL_v2 = "https://nacional-api-gray.vercel.app"
+export const API_NACIONAL_URL_v2 = "https://api-nacional.vercel.app"
 export const PLATFORM_FOLDERS = {
   meta: "1d0cYXZVyaRuxEazg50mXwLf-9WKnl-TV",
   pinterest: "1tgeWGAHm7TJSCfhQ25Lffy-tiZ46D6kp",
