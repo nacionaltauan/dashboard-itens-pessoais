@@ -415,12 +415,6 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
 
   // Função para formatar números
   const formatNumber = (value: number): string => {
-    if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(1)} mi`
-    }
-    if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)} mil`
-    }
     return value.toLocaleString("pt-BR")
   }
 
