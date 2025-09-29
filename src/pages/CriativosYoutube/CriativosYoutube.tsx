@@ -94,7 +94,16 @@ const CriativosYoutube: React.FC = () => {
 
   useEffect(() => {
     const values = apiData?.data?.values
-    if (!values || values.length <= 1) return
+    if (!values || values.length <= 1) {
+      console.log("YouTube: No data available or insufficient rows")
+      return
+    }
+
+    console.log("YouTube: Data received", { 
+      totalRows: values.length, 
+      headers: values[0],
+      firstRow: values[1] 
+    })
 
     const headers = values[0]
     const rows = values.slice(1)
@@ -149,11 +158,34 @@ const CriativosYoutube: React.FC = () => {
       }
     })
 
-    const processed: CreativeData[] = mapped.filter((item: CreativeData): item is CreativeData => Boolean(item.date))
+    const processed: CreativeData[] = mapped.filter((item: CreativeData): item is CreativeData => {
+      if (!item.date) {
+        console.log("YouTube: Item without date", item)
+        return false
+      }
+      
+      // Verificar se a data é válida
+      const date = new Date(item.date)
+      const isValid = !isNaN(date.getTime())
+      
+      if (!isValid) {
+        console.log("YouTube: Invalid date", { date: item.date, parsed: date })
+      }
+      
+      return isValid
+    })
+
+    console.log("YouTube: Processed data", { 
+      total: processed.length,
+      sample: processed[0] 
+    })
 
     setProcessedData(processed)
 
-    const allDates = processed.map((i) => new Date(i.date)).sort((a, b) => a.getTime() - b.getTime())
+    const allDates = processed
+      .map((i) => new Date(i.date))
+      .filter(date => !isNaN(date.getTime())) // Filtrar datas inválidas
+      .sort((a, b) => a.getTime() - b.getTime())
 
     if (allDates.length > 0) {
       setDateRange({
@@ -171,6 +203,12 @@ const CriativosYoutube: React.FC = () => {
         const itemDate = new Date(item.date)
         const startDate = new Date(dateRange.start)
         const endDate = new Date(dateRange.end)
+        
+        // Verificar se as datas são válidas
+        if (isNaN(itemDate.getTime()) || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          return false
+        }
+        
         return itemDate >= startDate && itemDate <= endDate
       })
     }
