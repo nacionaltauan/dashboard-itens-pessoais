@@ -943,7 +943,7 @@ export const fetchPinterestNacionalData = async () => {
 export const fetchYouTubeNacionalData = async () => {
   try {
     const response = await apiNacional.get(
-      "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=YouTube",
+      "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Google%20-%20Tratado",
     )
     return response.data
   } catch (error) {

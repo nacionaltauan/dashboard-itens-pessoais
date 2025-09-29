@@ -123,29 +123,29 @@ const CriativosYoutube: React.FC = () => {
       return {
         date: get("Date"),
         campaignName: get("Campaign name"),
-        adGroupName: get("Ad group name"),
-        adName: get("Ad name"),
-        adText: get("Ad text"),
-        videoThumbnailUrl: get("Video thumbnail URL"),
+        adGroupName: get("Creative title"), // Usando Creative title como adGroupName
+        adName: get("Creative title"),
+        adText: get("Creative title"), // Usando Creative title como adText também
+        videoThumbnailUrl: "", // Não há thumbnail URL na planilha
         impressions: parseInteger(get("Impressions")),
         clicks: parseInteger(get("Clicks")),
-        cost: parseNumber(get("Cost")),
-        cpc: parseNumber(get("CPC")),
-        cpm: parseNumber(get("CPM")),
+        cost: parseNumber(get("Total spent")),
+        cpc: 0, // Não há CPC na planilha
+        cpm: 0, // Não há CPM na planilha
         reach: parseInteger(get("Reach")),
-        frequency: parseNumber(get("Frequency")),
-        results: parseInteger(get("Results")),
-        videoViews: parseInteger(get("Video views")),
-        twoSecondVideoViews: parseInteger(get("2-second video views")),
+        frequency: 0, // Não há frequency na planilha
+        results: parseInteger(get("Total engagements")),
+        videoViews: parseInteger(get("Video views ")), // Note o espaço extra
+        twoSecondVideoViews: parseInteger(get("Video starts")),
         videoViews25: parseInteger(get("Video views at 25%")),
         videoViews50: parseInteger(get("Video views at 50%")),
         videoViews75: parseInteger(get("Video views at 75%")),
-        videoViews100: parseInteger(get("Video views at 100%")),
-        profileVisits: parseInteger(get("Profile visits")),
-        paidLikes: parseInteger(get("Paid likes")),
-        paidComments: parseInteger(get("Paid comments")),
-        paidShares: parseInteger(get("Paid shares")),
-        paidFollows: parseInteger(get("Paid follows")),
+        videoViews100: parseInteger(get("Video completions")),
+        profileVisits: 0, // Não há profile visits na planilha
+        paidLikes: 0, // Não há paid likes na planilha
+        paidComments: 0, // Não há paid comments na planilha
+        paidShares: 0, // Não há paid shares na planilha
+        paidFollows: 0, // Não há paid follows na planilha
       }
     })
 
@@ -318,7 +318,7 @@ const CriativosYoutube: React.FC = () => {
         <p className="text-red-600">Erro ao carregar dados: {error.message}</p>
         <p className="text-red-500 text-sm mt-2">
           Verifique se a API está funcionando corretamente:
-          https://nacional-api-gray.vercel.app/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=YouTube
+          https://nacional-api-gray.vercel.app/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Google%20-%20Tratado
         </p>
       </div>
     )
