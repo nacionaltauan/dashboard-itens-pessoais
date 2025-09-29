@@ -227,7 +227,7 @@ const CriativosYoutube: React.FC = () => {
       })
     }
 
-    const influencerTerms = ["INFLUENCIADOR HENRI"];
+    const influencerTerms = ["INFLUENCIADOR HENRY", "INFLUENCIADOR MATHEUS"];
 
     if (activeCategoryFilter === 'influenciadores') {
       filtered = filtered.filter(item => 
