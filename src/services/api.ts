@@ -11,7 +11,7 @@ export const PLATFORM_FOLDERS = {
   meta: "1d0cYXZVyaRuxEazg50mXwLf-9WKnl-TV",
   pinterest: "1tgeWGAHm7TJSCfhQ25Lffy-tiZ46D6kp",
   tiktok: "1ePi_3nKjBpTw_tYobt1QuRRO9NkE4aYm",
-  youtube: "1ePi_3nKjBpTw_tYobt1QuRRO9NkE4aYm", // Usando a mesma pasta do TikTok por enquanto
+  youtube: "1rOTMIDee9UL9LzwRvwe3zFoOsTOi0FNw", // Pasta correta do YouTube
 } as const
 
 // Tipos para as respostas da API

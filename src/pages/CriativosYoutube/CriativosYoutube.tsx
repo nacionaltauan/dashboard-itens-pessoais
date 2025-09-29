@@ -124,13 +124,27 @@ const CriativosYoutube: React.FC = () => {
       return isNaN(n) ? 0 : n
     }
 
+    // Função para converter data brasileira (DD/MM/YYYY) para formato ISO
+    const parseBrazilianDate = (dateStr: string): string => {
+      if (!dateStr?.trim()) return ""
+      
+      // Dividir a data em partes
+      const parts = dateStr.split("/")
+      if (parts.length !== 3) return ""
+      
+      const [day, month, year] = parts
+      
+      // Criar data no formato YYYY-MM-DD
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+    }
+
     const mapped: CreativeData[] = rows.map((row: string[]) => {
       const get = (field: string) => {
         const idx = headers.indexOf(field)
         return idx >= 0 ? (row[idx] ?? "") : ""
       }
       return {
-        date: get("Date"),
+        date: parseBrazilianDate(get("Date")),
         campaignName: get("Campaign name"),
         adGroupName: get("Creative title"), // Usando Creative title como adGroupName
         adName: get("Creative title"),
