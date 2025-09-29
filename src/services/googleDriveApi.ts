@@ -58,7 +58,7 @@ export const googleDriveApi = {
   },
 
   // Buscar imagens para uma plataforma específica
-  async getPlatformImages(platform: "meta" | "pinterest" | "tiktok"): Promise<Map<string, { url: string, type: string }>> {
+  async getPlatformImages(platform: "meta" | "pinterest" | "tiktok" | "youtube"): Promise<Map<string, { url: string, type: string }>> {
     const cacheKey = platform
 
     // Verificar cache primeiro
@@ -175,7 +175,7 @@ export const googleDriveApi = {
   },
 
   // Função para invalidar cache de uma plataforma específica
-  clearPlatformCache(platform: "meta" | "pinterest" | "tiktok") {
+  clearPlatformCache(platform: "meta" | "pinterest" | "tiktok" | "youtube") {
     mediaCache.delete(platform)
   }
 }

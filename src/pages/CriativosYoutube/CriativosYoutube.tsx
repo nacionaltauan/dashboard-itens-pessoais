@@ -38,6 +38,28 @@ interface CreativeData {
   paidFollows: number
 }
 
+interface YoutubeCreativeData {
+  date: string
+  campaignName: string
+  creativeTitle: string
+  reach: number
+  impressions: number
+  clicks: number
+  totalSpent: number
+  videoViews: number
+  videoViews25: number
+  videoViews50: number
+  videoViews75: number
+  videoCompletions: number
+  videoStarts: number
+  totalEngagements: number
+  cpm: number
+  cpc: number
+  ctr: number
+  frequency: number
+  mediaUrl?: string
+}
+
 const CriativosYoutube: React.FC = () => {
   const contentRef = useRef<HTMLDivElement>(null)
   const { data: apiData, loading, error } = useYouTubeNacionalData()
@@ -51,7 +73,7 @@ const CriativosYoutube: React.FC = () => {
   const [creativeMedias, setCreativeMedias] = useState<Map<string, { url: string, type: string }>>(new Map())
   const [mediasLoading, setMediasLoading] = useState(false)
 
-  const [selectedCreative, setSelectedCreative] = useState<CreativeData | null>(null)
+  const [selectedCreative, setSelectedCreative] = useState<YoutubeCreativeData | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
@@ -255,12 +277,29 @@ const CriativosYoutube: React.FC = () => {
   const openCreativeModal = (creative: CreativeData) => {
     const driveMediaData = googleDriveApi.findMediaForCreative(creative.adName, creativeMedias)
     
-    const creativeWithMedia = {
-      ...creative,
+    const youtubeCreative: YoutubeCreativeData = {
+      date: creative.date,
+      campaignName: creative.campaignName,
+      creativeTitle: creative.adName,
+      reach: creative.reach,
+      impressions: creative.impressions,
+      clicks: creative.clicks,
+      totalSpent: creative.cost,
+      videoViews: creative.videoViews,
+      videoViews25: creative.videoViews25,
+      videoViews50: creative.videoViews50,
+      videoViews75: creative.videoViews75,
+      videoCompletions: creative.videoViews100,
+      videoStarts: creative.twoSecondVideoViews,
+      totalEngagements: creative.paidLikes + creative.paidComments + creative.paidShares + creative.paidFollows,
+      cpm: creative.cpm,
+      cpc: creative.cpc,
+      ctr: creative.impressions > 0 ? (creative.clicks / creative.impressions) * 100 : 0,
+      frequency: creative.frequency,
       mediaUrl: driveMediaData?.url || creative.videoThumbnailUrl || undefined
     }
     
-    setSelectedCreative(creativeWithMedia)
+    setSelectedCreative(youtubeCreative)
     setIsModalOpen(true)
   }
 
