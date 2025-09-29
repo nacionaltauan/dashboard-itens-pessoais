@@ -939,6 +939,18 @@ export const fetchPinterestNacionalData = async () => {
   }
 }
 
+export const fetchYouTubeNacionalData = async () => {
+  try {
+    const response = await apiNacional.get(
+      "/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=YouTube",
+    )
+    return response.data
+  } catch (error) {
+    console.error("Erro ao buscar dados YouTube nacionais:", error)
+    throw error
+  }
+}
+
 // NOVOS HOOKS PARA API NACIONAL
 export const useConsolidadoNacionalData = () => {
   const [data, setData] = React.useState<any>(null)
@@ -999,6 +1011,31 @@ export const usePinterestNacionalData = () => {
     try {
       setLoading(true)
       const result = await fetchPinterestNacionalData()
+      setData(result)
+      setError(null)
+    } catch (err) {
+      setError(err as Error)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  return { data, loading, error, refetch: loadData }
+}
+
+export const useYouTubeNacionalData = () => {
+  const [data, setData] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<Error | null>(null)
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true)
+      const result = await fetchYouTubeNacionalData()
       setData(result)
       setError(null)
     } catch (err) {
