@@ -295,6 +295,7 @@ const CriativosYoutube: React.FC = () => {
       paidLikes: filteredData.reduce((sum, item) => sum + item.paidLikes, 0),
       avgCpm: 0,
       avgCpc: 0,
+      avgCpv: 0,
       avgFrequency: 0,
       ctr: 0,
       vtr: 0,
@@ -304,6 +305,7 @@ const CriativosYoutube: React.FC = () => {
   if (filteredData.length > 0) {
     totals.avgCpm = totals.impressions > 0 ? totals.investment / (totals.impressions / 1000) : 0
     totals.avgCpc = totals.clicks > 0 ? totals.investment / totals.clicks : 0
+    totals.avgCpv = totals.videoViews > 0 ? totals.investment / totals.videoViews : 0
     totals.avgFrequency = totals.reach > 0 ? totals.impressions / totals.reach : 0
     totals.ctr = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0
     totals.vtr = totals.impressions > 0 ? (totals.videoViews100 / totals.impressions) * 100 : 0
@@ -465,6 +467,16 @@ const CriativosYoutube: React.FC = () => {
         <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
           <div className="text-sm text-gray-600 mb-1">CPC</div>
           <div className="text-lg font-bold text-gray-900">{formatCurrency(totals.avgCpc)}</div>
+        </div>
+
+        <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
+          <div className="text-sm text-gray-600 mb-1">CPM</div>
+          <div className="text-lg font-bold text-gray-900">{formatCurrency(totals.avgCpm)}</div>
+        </div>
+
+        <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
+          <div className="text-sm text-gray-600 mb-1">CPV</div>
+          <div className="text-lg font-bold text-gray-900">{formatCurrency(totals.avgCpv)}</div>
         </div>
 
         <div className="card-overlay rounded-lg shadow-lg p-4 text-center">
