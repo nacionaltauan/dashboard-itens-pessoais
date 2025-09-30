@@ -105,24 +105,6 @@ const CriativosYoutube: React.FC = () => {
       firstRow: values[1] 
     })
 
-    // Debug específico para Video completions
-    const videoCompletionsIndex = values[0].indexOf("Video completions")
-    console.log("YouTube: Video completions index:", videoCompletionsIndex)
-    console.log("YouTube: All headers:", values[0])
-    
-    // Verificar se existe alguma variação do nome
-    const possibleNames = ["Video completions", "Video completions ", "Video completions%", "Video completions (100%)"]
-    possibleNames.forEach(name => {
-      const index = values[0].indexOf(name)
-      if (index >= 0) {
-        console.log(`YouTube: Found "${name}" at index ${index}`)
-      }
-    })
-    
-    if (videoCompletionsIndex >= 0) {
-      console.log("YouTube: Video completions sample values:", values.slice(1, 4).map((row: any[]) => row[videoCompletionsIndex]))
-    }
-
     const headers = values[0]
     const rows = values.slice(1)
 
@@ -181,7 +163,7 @@ const CriativosYoutube: React.FC = () => {
         videoViews25: parseInteger(get("Video views at 25%")),
         videoViews50: parseInteger(get("Video views at 50%")),
         videoViews75: parseInteger(get("Video views at 75%")),
-        videoViews100: parseInteger(get("Video completions")),
+        videoViews100: parseInteger(get("Video completions ")),
         profileVisits: 0, // Não há profile visits na planilha
         paidLikes: 0, // Não há paid likes na planilha
         paidComments: 0, // Não há paid comments na planilha
@@ -205,17 +187,6 @@ const CriativosYoutube: React.FC = () => {
       }
       
       return isValid
-    })
-
-    // Debug para Video completions processados
-    console.log("YouTube: Processed data sample", {
-      total: processed.length,
-      sample: processed[0],
-      videoViews100Sample: processed.slice(0, 3).map(item => ({
-        adName: item.adName,
-        videoViews100: item.videoViews100,
-        impressions: item.impressions
-      }))
     })
 
     console.log("YouTube: Processed data", { 
