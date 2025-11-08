@@ -137,14 +137,6 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
       }
     }
 
-    const pracaSet = new Set<string>()
-    processedData.forEach((item) => {
-      if (item.praca && item.praca.trim() !== "") {
-        pracaSet.add(item.praca)
-      }
-    })
-    const pracas = Array.from(pracaSet).filter(Boolean)
-    setAvailablePracas(pracas)
   }, [processedData])
 
   // Função para obter dados baseado no período selecionado

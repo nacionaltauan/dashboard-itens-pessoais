@@ -147,7 +147,6 @@ const EstrategiaOnline: React.FC = () => {
       const meses = Array.from(new Set(processed.map((item) => item.mes)))
         .filter(Boolean)
         .sort()
-      setAvailableMeses(meses)
 
       // Calcular resumo da campanha
       const totalGeralPrevisto = processed.reduce((sum, v) => sum + v.custoPrevisto, 0)
