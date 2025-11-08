@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, useCallback } from "react"
 import { TrendingUp, Calendar, Users, BarChart3, MessageCircle, Phone, HandHeart, QrCode, UserX } from "lucide-react"
 import Loading from "../../components/Loading/Loading"
 import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
@@ -72,7 +72,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
   })
 
   // Função para verificar se uma data está dentro do range selecionado
-  const isDateInRange = (dateStr: string): boolean => {
+  const isDateInRange = useCallback((dateStr: string): boolean => {
     if (!dateStr || !dateRange.start || !dateRange.end) return true
 
     // Converter string de data para formato comparável (YYYY-MM-DD)
@@ -81,7 +81,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     const endDate = new Date(dateRange.end).toISOString().split("T")[0]
 
     return date >= startDate && date <= endDate
-  }
+  }, [dateRange])
 
   // Função para obter cor do veículo/plataforma
   const getPlataformaColor = (source: string): string => {
