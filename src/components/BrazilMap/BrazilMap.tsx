@@ -5,38 +5,7 @@ import { useRef, useEffect, useState, useMemo } from "react"
 import * as d3 from "d3"
 import type { FeatureCollection, Feature, Geometry } from "geojson"
 
-// Mapeamento de nomes de estados para abreviações e vice-versa
-const STATE_NAMES_TO_ABBR: { [key: string]: string } = {
-  Acre: "AC",
-  Alagoas: "AL",
-  Amapá: "AP",
-  Amazonas: "AM",
-  Bahia: "BA",
-  Ceará: "CE",
-  "Distrito Federal": "DF",
-  "Espírito Santo": "ES",
-  Goiás: "GO",
-  Maranhão: "MA",
-  "Mato Grosso": "MT",
-  "Mato Grosso do Sul": "MS",
-  "Minas Gerais": "MG",
-  Pará: "PA",
-  Paraíba: "PB",
-  Paraná: "PR",
-  Pernambuco: "PE",
-  Piauí: "PI",
-  "Rio de Janeiro": "RJ",
-  "Rio Grande do Norte": "RN",
-  "Rio Grande do Sul": "RS",
-  Rondônia: "RO",
-  Roraima: "RR",
-  "Santa Catarina": "SC",
-  "São Paulo": "SP",
-  Sergipe: "SE",
-  Tocantins: "TO",
-}
-
-// Removido ABBR_TO_STATE_NAMES - não está sendo usado
+// Removido STATE_NAMES_TO_ABBR e ABBR_TO_STATE_NAMES - não estão sendo usados
 
 // Tipos para as propriedades dos estados brasileiros
 interface StateProperties {

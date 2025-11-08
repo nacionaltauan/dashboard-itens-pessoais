@@ -60,7 +60,7 @@ const LinhaTempo: React.FC = () => {
   >("impressions")
   // Removido availablePracas e selectedPracas - não estão sendo usados
 
-  const platformColors: Record<string, string> = {
+  const platformColors = useMemo<Record<string, string>>(() => ({
     TikTok: "#ff0050",
     LinkedIn: "#0077b5",
     Meta: "#0668E1",
@@ -73,7 +73,7 @@ const LinhaTempo: React.FC = () => {
     YouTube: "#ff0000",
     Pinterest: "#bd081c",
     Default: "#6366f1",
-  }
+  }), [])
 
   const createLocalDate = (dateStr: string) => {
     if (!dateStr) return new Date()

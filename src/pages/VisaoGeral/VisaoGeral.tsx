@@ -7,19 +7,7 @@ import { useConsolidadoNacionalData } from "../../services/api"
 import PDFDownloadButton from "../../components/PDFDownloadButton/PDFDownloadButton"
 import Loading from "../../components/Loading/Loading"
 
-// Interface for the raw API data
-interface ApiDataItem {
-  date?: string
-  platform?: string
-  campaignName?: string
-  impressions?: number
-  cost?: number
-  reach?: number
-  clicks?: number
-  frequency?: number
-  cpm?: number
-  praca?: string
-}
+// Removido ApiDataItem - não está sendo usado
 
 interface ProcessedData {
   date: string
@@ -60,7 +48,7 @@ const VisaoGeral: React.FC = () => {
   const [selectedPracas, setSelectedPracas] = useState<string[]>([])
 
   // Cores para as plataformas
-  const platformColors: Record<string, string> = {
+  const platformColors = useMemo<Record<string, string>>(() => ({
     Google: "#4285f4",
     Meta: "#0668E1",
     TikTok: "#ff0050",
@@ -71,7 +59,7 @@ const VisaoGeral: React.FC = () => {
     "Folha de SP": "#e91e63",
     Spotify: "#1DB954",
     Default: "#6366f1",
-  }
+  }), [])
 
   // Valores previstos para pacing
   const impressoesPrevistas = 51241352;

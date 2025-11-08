@@ -50,7 +50,7 @@ const API_TO_GEOJSON_STATE_NAMES: { [key: string]: string } = {
 const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
   const contentRef = useRef<HTMLDivElement>(null)
   const { data: ga4ResumoData, loading: resumoLoading, error: resumoError } = useGA4ResumoNacionalData()
-  const { data: ga4CompletoData, loading: completoLoading, error: completoError } = useGA4CompletoNacionalData()
+  const { loading: completoLoading, error: completoError } = useGA4CompletoNacionalData()
   const { data: ga4SourceData, loading: sourceLoading, error: sourceError } = useGA4SourceNacionalData()
   const { data: eventosReceptivosData, loading: eventosLoading, error: eventosError } = useEventosReceptivosData()
 
@@ -127,7 +127,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
 
     // Índices das colunas
     const dateIndex = headers.indexOf("Date")
-    const campaignIndex = headers.indexOf("User campaign name")
+    // Removido campaignIndex - não está sendo usado
     const sourceIndex = headers.indexOf("Session manual source")
     const sessionsIndex = headers.indexOf("Sessions")
 
@@ -180,7 +180,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
       totalSessions,
       resumoPorData: dataResumo,
     }
-  }, [ga4SourceData, dateRange, isDateInRange])
+  }, [ga4SourceData, isDateInRange])
 
   const processedEventosData = useMemo(() => {
   if (!eventosReceptivosData?.data?.values || eventosReceptivosData.data.values.length <= 1) {
@@ -231,7 +231,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     faleConoscoCliques: faleConoscoTotal,
     totalCTAs: whatsappTotal + contrateAgoraTotal + faleConoscoTotal,
   }
-}, [eventosReceptivosData, dateRange, isDateInRange])
+}, [eventosReceptivosData, isDateInRange])
 
   const processedResumoData = useMemo(() => {
     
@@ -362,7 +362,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     }
 
     return resultado
-  }, [ga4ResumoData, dateRange, isDateInRange])
+  }, [ga4ResumoData, isDateInRange])
 
   // Removido processedCompletoData - não está sendo usado
 
