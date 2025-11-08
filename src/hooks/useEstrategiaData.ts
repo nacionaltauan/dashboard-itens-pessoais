@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import type { ResumoResponse, VeiculoData, MonthlyData } from "../types/estrategiaOnline"
+import { API_NACIONAL_URL_v2 } from "../services/api"
 
 export function useEstrategiaData() {
   const [loading, setLoading] = useState(true)
@@ -13,7 +14,7 @@ export function useEstrategiaData() {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          "https://nacional-api-gray.vercel.app/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Resumo!A1:E1000",
+          `${API_NACIONAL_URL_v2}/google/sheets/1eyj0PSNlZvvxnj9H0G0LM_jn2Ry4pSHACH2WwP7xUWw/data?range=Resumo!A1:E1000`,
         )
         const data: ResumoResponse = await response.json()
 
