@@ -114,11 +114,6 @@ const VisaoGeral: React.FC = () => {
     })
   }
 
-  const validateAndReturnDate = (dateStr: string | undefined): string => {
-    if (!dateStr) return ""
-    return dateStr
-  }
-
   // Processar dados da API
   useEffect(() => {
     if (apiData?.data?.values) {
@@ -244,7 +239,7 @@ const VisaoGeral: React.FC = () => {
     })
 
     return Object.values(metrics).sort((a, b) => b.impressions - a.impressions)
-  }, [filteredData])
+  }, [filteredData, platformColors])
 
   // Calcular totais
   const totals = useMemo(() => {

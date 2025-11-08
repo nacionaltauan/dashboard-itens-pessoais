@@ -269,6 +269,7 @@ const TikTokCreativeModal: React.FC<TikTokCreativeModalProps> = ({ creative, isO
                         frameBorder="0"
                         allow="autoplay; encrypted-media"
                         sandbox="allow-scripts allow-same-origin allow-presentation"
+                        title={`Mídia do anúncio ${creative.adName}`}
                         onError={(e) => {
                           console.error(`Erro ao carregar mídia TikTok`, e)
                           const target = e.target as HTMLIFrameElement

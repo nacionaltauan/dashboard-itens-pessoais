@@ -148,7 +148,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
 
       const sessions = Number.parseInt(row[sessionsIndex]) || 0
       const source = row[sourceIndex] || "Outros" // USAR SOURCE em vez de plataforma
-      const campaign = row[campaignIndex] || "(not set)"
+      // Removido campaign - não está sendo usado
 
       if (sessions > 0) {
         totalSessions += sessions
@@ -180,7 +180,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
       totalSessions,
       resumoPorData: dataResumo,
     }
-  }, [ga4SourceData, dateRange])
+  }, [ga4SourceData, dateRange, isDateInRange])
 
   const processedEventosData = useMemo(() => {
   if (!eventosReceptivosData?.data?.values || eventosReceptivosData.data.values.length <= 1) {
@@ -231,7 +231,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     faleConoscoCliques: faleConoscoTotal,
     totalCTAs: whatsappTotal + contrateAgoraTotal + faleConoscoTotal,
   }
-}, [eventosReceptivosData, dateRange])
+}, [eventosReceptivosData, dateRange, isDateInRange])
 
   const processedResumoData = useMemo(() => {
     
@@ -362,56 +362,9 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
     }
 
     return resultado
-  }, [ga4ResumoData, dateRange])
+  }, [ga4ResumoData, dateRange, isDateInRange])
 
-  // Processamento dos dados da NOVA API GA4 Completo (para os novos cards) com filtro de data
-  const processedCompletoData = useMemo(() => {
-    
-    
-    // CORREÇÃO: Verificar se existe data.values ao invés de só values
-    if (!ga4CompletoData?.data?.values || ga4CompletoData.data.values.length <= 1) {
-      return {
-        totalSessions: 0,
-        totalEvents: 0,
-      }
-    }
-
-    // CORREÇÃO: Acessar ga4CompletoData.data.values
-    const headers = ga4CompletoData.data.values[0]
-    const rows = ga4CompletoData.data.values.slice(1)
-
-    
-
-    const dateIndex = headers.indexOf("Date")
-    const sessionsIndex = headers.indexOf("Sessions")
-    const eventCountIndex = headers.indexOf("Event count")
-
-    
-
-    let totalSessions = 0
-    let totalEvents = 0
-
-    rows.forEach((row: any[], index: number) => {
-      const date = row[dateIndex] || ""
-     
-      // Aplicar filtro de data
-      if (!isDateInRange(date)) {
-        return
-      }
-
-      const sessions = Number.parseInt(row[sessionsIndex]) || 0
-      const events = Number.parseInt(row[eventCountIndex]) || 0
-
-      totalSessions += sessions
-      totalEvents += events
-
-    })
-    
-    return {
-      totalSessions,
-      totalEvents,
-    }
-  }, [ga4CompletoData, dateRange])
+  // Removido processedCompletoData - não está sendo usado
 
   // Função para formatar números
   const formatNumber = (value: number): string => {
@@ -706,7 +659,7 @@ const TrafegoEngajamento: React.FC<TrafegoEngajamentoProps> = () => {
         </div>
       </div>
 
-      /* Resumo dos CTAs */
+      {/* Resumo dos CTAs */}
     <div className="card-overlay rounded-lg shadow-lg p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumo de Conversões (CTAs)</h3>
       

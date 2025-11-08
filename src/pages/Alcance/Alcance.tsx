@@ -46,11 +46,10 @@ const Alcance: React.FC = () => {
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: "", end: "" })
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([])
   const [availablePlatforms, setAvailablePlatforms] = useState<string[]>([])
-  const [selectedPracas, setSelectedPracas] = useState<string[]>([])
-  const [availablePracas, setAvailablePracas] = useState<string[]>([])
+  // Removido selectedPracas e availablePracas - não estão sendo usados
 
   // Cores para as plataformas
-  const platformColors: Record<string, string> = {
+  const platformColors: Record<string, string> = useMemo(() => ({
     Google: "#4285f4",
     Meta: "#0668E1",
     TikTok: "#ff0050",
@@ -72,7 +71,7 @@ const Alcance: React.FC = () => {
     GDN: "#34A853",
     "Demand-Gen": "#EA4335",
     Default: "#6366f1",
-  }
+  }), [])
 
   // Adicione também esta validação no início do componente para debug:
   useEffect(() => {

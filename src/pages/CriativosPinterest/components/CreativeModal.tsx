@@ -280,6 +280,7 @@ const CreativeModal: React.FC<CreativeModalProps> = ({ creative, isOpen, onClose
                       frameBorder="0"
                       allow="autoplay; encrypted-media"
                       sandbox="allow-scripts allow-same-origin allow-presentation"
+                      title={`Mídia do pin ID ${creative.adId}`}
                       onError={(e) => {
                         console.error(`Erro ao carregar mídia para Ad ID: ${creative.adId}`, e)
                         const target = e.target as HTMLIFrameElement

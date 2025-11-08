@@ -249,6 +249,7 @@ const YoutubeCreativeModal: React.FC<YoutubeCreativeModalProps> = ({ creative, i
                       frameBorder="0"
                       allow="autoplay; encrypted-media"
                       sandbox="allow-scripts allow-same-origin allow-presentation"
+                      title={`Mídia do criativo ${creative.creativeTitle}`}
                       onError={(e) => {
                         console.error(`Erro ao carregar mídia YouTube`, e)
                         const target = e.target as HTMLIFrameElement

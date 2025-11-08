@@ -10,10 +10,7 @@ import {
   Calendar,
   Target,
   User,
-  TargetIcon as Bullseye,
   BookOpenText,
-  Share2,
-  Video,
   TrendingUp,
 } from "lucide-react"
 

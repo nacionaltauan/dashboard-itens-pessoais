@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Home, Clock, Globe, Eye, BarChart3, Users, LogOut, User, BookOpenText, Share2, Video, TrendingUp } from "lucide-react"
+import { Home, Clock, Globe, Eye, BarChart3, Users, LogOut, User, BookOpenText, TrendingUp } from "lucide-react"
 import { useAuth } from "../../contexts/AuthContext"
 
 interface MenuItem {

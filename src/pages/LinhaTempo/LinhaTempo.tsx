@@ -58,8 +58,7 @@ const LinhaTempo: React.FC = () => {
   const [selectedMetric, setSelectedMetric] = useState<
     "impressions" | "clicks" | "totalSpent" | "videoViews" | "cpm" | "cpc" | "ctr" | "vtr"
   >("impressions")
-  const [availablePracas, setAvailablePracas] = useState<string[]>([])
-  const [selectedPracas, setSelectedPracas] = useState<string[]>([])
+  // Removido availablePracas e selectedPracas - não estão sendo usados
 
   const platformColors: Record<string, string> = {
     TikTok: "#ff0050",
@@ -217,20 +216,6 @@ const LinhaTempo: React.FC = () => {
     }
   }, [processedData, dateRange, selectedVehicles])
 
-  const getMetricValue = (item: DataPoint, metric: typeof selectedMetric): number => {
-    switch (metric) {
-      case "impressions": return item.impressions || 0
-      case "clicks": return item.clicks || 0
-      case "totalSpent": return item.totalSpent || 0
-      case "videoViews": return item.videoViews || item.videoCompletions || 0
-      case "cpm":
-      case "cpc":
-      case "ctr":
-      case "vtr": return 0
-      default: return 0
-    }
-  }
-
   const chartData: ChartData[] = useMemo(() => {
     const calculateCompositeMetric = (dayData: DataPoint[], metric: typeof selectedMetric): number => {
       if (!dayData || dayData.length === 0) return 0
@@ -316,7 +301,7 @@ const LinhaTempo: React.FC = () => {
         color: platformColors[platform] || platformColors.Default,
       }))
       .sort((a, b) => new Date(a.firstDate).getTime() - new Date(b.firstDate).getTime())
-  }, [processedData])
+  }, [processedData, platformColors])
 
   // Cálculos para as métricas principais
   const totalInvestment = useMemo(() => filteredData.reduce((sum, item) => sum + item.totalSpent, 0), [filteredData])
@@ -361,17 +346,6 @@ const LinhaTempo: React.FC = () => {
     })
   }
 
-  useEffect(() => {
-    if (processedData.length > 0) {
-      const pracaSet = new Set<string>()
-      processedData.forEach((item) => {
-        if (item.praca && item.praca.trim() !== "") { pracaSet.add(item.praca) }
-      })
-      const pracas = Array.from(pracaSet).filter(Boolean)
-      setAvailablePracas(pracas)
-      setSelectedPracas([])
-    }
-  }, [processedData])
 
   if (isWeeklyAnalysis) {
     return (

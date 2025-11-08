@@ -69,7 +69,7 @@ const Visualizacoes: React.FC = () => {
   const [availablePracas, setAvailablePracas] = useState<string[]>([])
 
   // Cores para as plataformas (seguindo o modelo da imagem)
-  const platformColors: Record<string, string> = {
+  const platformColors: Record<string, string> = useMemo(() => ({
     YouTube: "#ff6b6b",
     TikTok: "#ff4757",
     Google: "#5f27cd",
@@ -85,15 +85,7 @@ const Visualizacoes: React.FC = () => {
     GDN: "#34A853",
     "Demand-Gen": "#EA4335",
     Default: "#6c5ce7",
-  }
-
-  // Cores para tipos de compra
-  const tipoCompraColors: Record<string, string> = {
-    CPM: "#3B82F6",
-    CPC: "#10B981",
-    CPV: "#F59E0B",
-    Default: "#6B7280",
-  }
+  }), [])
 
   // Função para ordenar tipos de compra na ordem correta
   const sortTiposCompra = (tipos: string[]): string[] => {
@@ -105,20 +97,6 @@ const Visualizacoes: React.FC = () => {
       if (indexB === -1) return -1
       return indexA - indexB
     })
-  }
-
-  // Função para converter data de dd/MM/yyyy para yyyy-MM-dd
-  const convertDateFormat = (dateStr: string): string => {
-    if (!dateStr) return ""
-    const [day, month, year] = dateStr.split("/")
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
-  }
-
-  // Função para converter data de yyyy-MM-dd para dd/MM/yyyy
-  const convertDateToDisplay = (dateStr: string): string => {
-    if (!dateStr) return ""
-    const [year, month, day] = dateStr.split("-")
-    return `${day}/${month}/${year}`
   }
 
   // Adicione também esta validação no início do componente para debug:
@@ -421,25 +399,6 @@ const Visualizacoes: React.FC = () => {
     return Object.values(metrics).sort((a, b) => b.cost - a.cost)
   }, [filteredData, platformColors])
 
-  // Calcular totais
-  const totals = useMemo(() => {
-    const totalInvestment = filteredData.reduce((sum, item) => sum + item.cost, 0)
-    const totalImpressions = filteredData.reduce((sum, item) => sum + item.impressions, 0)
-    const totalVideoViews = filteredData.reduce((sum, item) => sum + item.videoCompletions, 0)
-    const avgVtr100 = totalImpressions > 0 ? (totalVideoViews / totalImpressions) * 100 : 0
-    const avgCpv = totalVideoViews > 0 ? totalInvestment / totalVideoViews : 0
-    const avgCpvc = avgCpv // CPVc é igual ao CPV quando consideramos visualizações 100%
-
-    return {
-      investment: totalInvestment,
-      impressions: totalImpressions,
-      videoViews: totalVideoViews,
-      vtr100: avgVtr100,
-      cpv: avgCpv,
-      cpvc: avgCpvc,
-    }
-  }, [filteredData])
-
   // Função para formatar números
   const formatNumber = (value: number): string => {
     if (value >= 1000000000) {
@@ -656,49 +615,6 @@ const Visualizacoes: React.FC = () => {
               impressões totais
             </p>
           </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Componente de gráfico de barras verticais
-  const VerticalBarChart: React.FC<{
-    title: string
-    data: PlatformMetrics[]
-    getValue: (item: PlatformMetrics) => number
-    format?: (value: number) => string
-    showPercentage?: boolean
-  }> = ({ title, data, getValue, format = formatNumber, showPercentage = false }) => {
-    const maxValue = Math.max(...data.map(getValue))
-
-    return (
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-        <div className="flex items-end space-x-2 h-32">
-          {data.slice(0, 8).map((item, index) => {
-            const value = getValue(item)
-            const height = maxValue > 0 ? (value / maxValue) * 100 : 0
-
-            return (
-              <div key={index} className="flex-1 flex flex-col items-center space-y-1">
-                <div className="w-full flex flex-col items-center">
-                  <div
-                    className="w-full rounded-t transition-all duration-500 flex items-end justify-center text-xs font-medium text-white p-1"
-                    style={{
-                      height: `${Math.max(height, 0)}%`,
-                      backgroundColor: item.color,
-                      minHeight: value > 0 ? "20px" : "0",
-                    }}
-                  >
-                    {value > 0 && (
-                      <span className="text-center">{showPercentage ? `${value.toFixed(2)}%` : format(value)}</span>
-                    )}
-                  </div>
-                </div>
-                <span className="text-xs text-gray-600 text-center truncate w-full">{item.platform}</span>
-              </div>
-            )
-          })}
         </div>
       </div>
     )

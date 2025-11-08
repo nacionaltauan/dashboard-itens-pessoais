@@ -44,7 +44,7 @@ const EstrategiaOnline: React.FC = () => {
   const [vehicleData, setVehicleData] = useState<VehicleData[]>([])
   const [mesesTotals, setMesesTotals] = useState<MesTotals[]>([])
   const [selectedMes, setSelectedMes] = useState<string | null>(null)
-  const [availableMeses, setAvailableMeses] = useState<string[]>([])
+  // Removido availableMeses - não está sendo usado
   const [campaignSummary, setCampaignSummary] = useState<CampaignSummary>({
     totalInvestimentoPrevisto: 0,
     totalCustoInvestido: 0,
@@ -102,7 +102,7 @@ const EstrategiaOnline: React.FC = () => {
   // Processar dados da API
   useEffect(() => {
     if (estrategiaData?.data?.values) {
-      const headers = estrategiaData.data.values[0]
+      // Removido headers - não está sendo usado
       const rows = estrategiaData.data.values.slice(1)
 
       const processed: VehicleData[] = rows
@@ -214,16 +214,6 @@ const EstrategiaOnline: React.FC = () => {
     })
   }
 
-  // Função para formatar números
-  const formatNumber = (value: number): string => {
-    if (value >= 1000000) {
-      return `${(value / 1000000).toFixed(1)} mi`
-    }
-    if (value >= 1000) {
-      return `${(value / 1000).toFixed(1)} mil`
-    }
-    return value.toLocaleString("pt-BR")
-  }
 
   if (loading) {
     return <Loading message="Carregando estratégia online..." />

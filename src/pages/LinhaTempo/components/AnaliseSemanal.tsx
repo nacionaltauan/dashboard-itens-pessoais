@@ -94,7 +94,7 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
   const [selectedMetric, setSelectedMetric] = useState<
     "impressions" | "clicks" | "views" | "cpm" | "cpc" | "cpv" | "ctr" | "vtr"
   >("impressions")
-  const [availablePracas, setAvailablePracas] = useState<string[]>([])
+  // Removido availablePracas - não está sendo usado
   // Função para criar datas locais sem problemas de timezone
   const createLocalDate = (dateStr: string) => {
     if (!dateStr) return new Date()
@@ -238,7 +238,8 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
     }
 
     return { current, previous, comparison }
-  }, [processedData, selectedVehicles, dateRange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processedData, selectedVehicles, dateRange, getFilteredDataByPeriod])
 
   // Dados do gráfico semanal comparativo
   const weeklyChartData: ChartData[] = useMemo(() => {
@@ -357,7 +358,8 @@ const AnaliseSemanal: React.FC<AnaliseSemanalProps> = ({
     }
 
     return result
-  }, [selectedMetric, processedData, selectedVehicles, dateRange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMetric, processedData, selectedVehicles, dateRange, getFilteredDataByPeriod])
 
   // Função para formatar valor monetário
   const formatCurrency = (value: number): string => {
